@@ -6,7 +6,6 @@
 <title>The Floor — Stock Club</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -60,100 +59,107 @@ input:focus { border-color: #E6A93C !important; }
 </head>
 <body>
 <div id="root"></div>
+<script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef, useCallback } = React;
+/* ------------------------------------------------------------------ *
+ *  THE FLOOR — stock-club trading simulator (hosted, live edition)
+ *  Live prices + news from your relay. Portfolio saves on this device.
+ *  Shared leaderboard arrives with the accounts step.
+ * ------------------------------------------------------------------ */
 
 const START_CASH = 100000;
 const RELAY_URL = "https://stock-club-relay.onrender.com";
-
 const T = {
-  bg: "#0E1116", panel: "#161B22", panel2: "#1B2129", line: "#242C38",
-  text: "#E7E2D6", muted: "#8A93A2", faint: "#5A626F",
-  gold: "#E6A93C", up: "#3FB950", down: "#F0523E",
+  bg: "#0E1116",
+  panel: "#161B22",
+  panel2: "#1B2129",
+  line: "#242C38",
+  text: "#E7E2D6",
+  muted: "#8A93A2",
+  faint: "#5A626F",
+  gold: "#E6A93C",
+  up: "#3FB950",
+  down: "#F0523E"
+};
+const UNIVERSE = [["AAPL", "Apple", 225], ["MSFT", "Microsoft", 430], ["NVDA", "NVIDIA", 130], ["AMZN", "Amazon", 185], ["GOOGL", "Alphabet", 175], ["META", "Meta", 560], ["TSLA", "Tesla", 250], ["AMD", "Adv. Micro Devices", 155], ["NFLX", "Netflix", 680], ["DIS", "Disney", 95], ["JPM", "JPMorgan Chase", 210], ["V", "Visa", 285], ["WMT", "Walmart", 75], ["KO", "Coca-Cola", 62], ["PEP", "PepsiCo", 170], ["XOM", "Exxon Mobil", 115], ["BA", "Boeing", 175], ["NKE", "Nike", 78], ["SBUX", "Starbucks", 95], ["UBER", "Uber", 72], ["PYPL", "PayPal", 68], ["INTC", "Intel", 22], ["GME", "GameStop", 25], ["AMC", "AMC Ent.", 5], ["SPY", "S&P 500 ETF", 555], ["QQQ", "Nasdaq-100 ETF", 480], ["VOO", "Vanguard S&P 500", 510], ["ARKK", "ARK Innovation ETF", 48], ["DIA", "Dow Jones ETF", 415]];
+const GLOSSARY = [["Long", "Buying an asset because you expect the price to go up. You profit when it rises."], ["Short", "Borrowing shares to sell now and buy back later. You profit when the price falls, and lose if it rises."], ["Buy", "Opening or adding to a position by purchasing shares."], ["Sell", "Closing a position by getting rid of shares you own."], ["Put", "An option that gains value when a stock falls. A bet the price drops."], ["Call", "An option that gains value when a stock rises. A bet the price climbs."], ["Option", "A contract to buy or sell a stock at a set price by a set date, without the obligation to."], ["ETF", "Exchange-Traded Fund. One ticker that holds a basket of stocks, so you buy a whole slice of the market at once (e.g. SPY tracks the S&P 500)."], ["Dividend", "A cash payment some companies send shareholders, usually quarterly, from their profits."], ["Bull market", "A stretch where prices are broadly rising and optimism is high."], ["Bear market", "A stretch where prices are broadly falling, often defined as a 20%+ drop."], ["Portfolio", "The full collection of everything you hold, plus your cash."], ["Diversification", "Spreading money across many assets so one bad pick can't sink you."], ["Market order", "An order to trade right now at whatever the current price is."], ["Limit order", "An order that only fills at a price you set or better."], ["Volatility", "How sharply a price swings. High volatility means bigger, faster moves."], ["P/E ratio", "Price divided by earnings per share. A rough gauge of how expensive a stock is versus its profits."], ["Market cap", "Total value of a company: share price times number of shares."], ["IPO", "Initial Public Offering. The first time a company sells shares to the public."], ["Ticker", "The short symbol that identifies a stock, like AAPL for Apple."], ["Bid / Ask", "The bid is the highest price buyers offer; the ask is the lowest price sellers accept."], ["Spread", "The gap between the bid and the ask price."], ["Margin", "Borrowed money from a broker used to trade a larger position than your cash allows."], ["Leverage", "Using borrowed money to amplify a position. It magnifies both gains and losses."], ["Blue chip", "A large, well-established, financially solid company (think Apple or Coca-Cola)."], ["Index fund", "A fund built to mirror a market index rather than beat it, usually with low fees."], ["Volume", "How many shares changed hands in a period. High volume signals strong interest."], ["Liquidity", "How easily you can buy or sell without moving the price. Cash is the most liquid."], ["Capital gain", "The profit when you sell something for more than you paid."], ["Broker", "The platform or firm that executes your trades (Robinhood, Fidelity, and so on)."]];
+
+/* ---- storage: localStorage, kept async-shaped so the app code is unchanged ---- */
+const sGet = k => {
+  try {
+    const v = localStorage.getItem(k);
+    return Promise.resolve(v ? JSON.parse(v) : null);
+  } catch {
+    return Promise.resolve(null);
+  }
+};
+const sSet = (k, v) => {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch (e) {}
+  return Promise.resolve();
+};
+const sList = prefix => {
+  const keys = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.indexOf(prefix) === 0) keys.push(key);
+    }
+  } catch (e) {}
+  return Promise.resolve(keys);
 };
 
-const UNIVERSE = [
-  ["AAPL","Apple",225],["MSFT","Microsoft",430],["NVDA","NVIDIA",130],
-  ["AMZN","Amazon",185],["GOOGL","Alphabet",175],["META","Meta",560],
-  ["TSLA","Tesla",250],["AMD","Adv. Micro Devices",155],["NFLX","Netflix",680],
-  ["DIS","Disney",95],["JPM","JPMorgan Chase",210],["V","Visa",285],
-  ["WMT","Walmart",75],["KO","Coca-Cola",62],["PEP","PepsiCo",170],
-  ["XOM","Exxon Mobil",115],["BA","Boeing",175],["NKE","Nike",78],
-  ["SBUX","Starbucks",95],["UBER","Uber",72],["PYPL","PayPal",68],
-  ["INTC","Intel",22],["GME","GameStop",25],["AMC","AMC Ent.",5],
-  ["SPY","S&P 500 ETF",555],["QQQ","Nasdaq-100 ETF",480],
-  ["VOO","Vanguard S&P 500",510],["ARKK","ARK Innovation ETF",48],
-  ["DIA","Dow Jones ETF",415],
-];
-
-const GLOSSARY = [
-  ["Long","Buying an asset because you expect the price to go up. You profit when it rises."],
-  ["Short","Borrowing shares to sell now and buy back later. You profit when the price falls, and lose if it rises."],
-  ["Buy","Opening or adding to a position by purchasing shares."],
-  ["Sell","Closing a position by getting rid of shares you own."],
-  ["Put","An option that gains value when a stock falls. A bet the price drops."],
-  ["Call","An option that gains value when a stock rises. A bet the price climbs."],
-  ["Option","A contract to buy or sell a stock at a set price by a set date, without the obligation to."],
-  ["ETF","Exchange-Traded Fund. One ticker that holds a basket of stocks, so you buy a whole slice of the market at once (e.g. SPY tracks the S&P 500)."],
-  ["Dividend","A cash payment some companies send shareholders, usually quarterly, from their profits."],
-  ["Bull market","A stretch where prices are broadly rising and optimism is high."],
-  ["Bear market","A stretch where prices are broadly falling, often defined as a 20%+ drop."],
-  ["Portfolio","The full collection of everything you hold, plus your cash."],
-  ["Diversification","Spreading money across many assets so one bad pick can't sink you."],
-  ["Market order","An order to trade right now at whatever the current price is."],
-  ["Limit order","An order that only fills at a price you set or better."],
-  ["Volatility","How sharply a price swings. High volatility means bigger, faster moves."],
-  ["P/E ratio","Price divided by earnings per share. A rough gauge of how expensive a stock is versus its profits."],
-  ["Market cap","Total value of a company: share price times number of shares."],
-  ["IPO","Initial Public Offering. The first time a company sells shares to the public."],
-  ["Ticker","The short symbol that identifies a stock, like AAPL for Apple."],
-  ["Bid / Ask","The bid is the highest price buyers offer; the ask is the lowest price sellers accept."],
-  ["Spread","The gap between the bid and the ask price."],
-  ["Margin","Borrowed money from a broker used to trade a larger position than your cash allows."],
-  ["Leverage","Using borrowed money to amplify a position. It magnifies both gains and losses."],
-  ["Blue chip","A large, well-established, financially solid company (think Apple or Coca-Cola)."],
-  ["Index fund","A fund built to mirror a market index rather than beat it, usually with low fees."],
-  ["Volume","How many shares changed hands in a period. High volume signals strong interest."],
-  ["Liquidity","How easily you can buy or sell without moving the price. Cash is the most liquid."],
-  ["Capital gain","The profit when you sell something for more than you paid."],
-  ["Broker","The platform or firm that executes your trades (Robinhood, Fidelity, and so on)."],
-];
-
-const sGet = (k) => { try { const v = localStorage.getItem(k); return Promise.resolve(v ? JSON.parse(v) : null); } catch { return Promise.resolve(null); } };
-const sSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} return Promise.resolve(); };
-const sList = (prefix) => { const keys = []; try { for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.indexOf(prefix) === 0) keys.push(key); } } catch (e) {} return Promise.resolve(keys); };
-
-const money = (n) => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const price = (n) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const pct = (n) => (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+/* ---- helpers ---- */
+const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+const price = n => "$" + n.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+const pct = n => (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
 const uid = () => "u" + Math.random().toString(36).slice(2, 10);
-const slug = (s) => s.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 40);
-const ago = (unixSec) => {
+const slug = s => s.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 40);
+const ago = unixSec => {
   const s = Math.max(0, Math.floor(Date.now() / 1000 - unixSec));
   if (s < 60) return s + "s ago";
-  const m = Math.floor(s / 60); if (m < 60) return m + "m ago";
-  const h = Math.floor(m / 60); if (h < 24) return h + "h ago";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
   return Math.floor(h / 24) + "d ago";
 };
-const SAMPLE_NEWS = [
-  { id: "s1", headline: "Waiting for the live news feed…", source: "The Floor", datetime: Math.floor(Date.now() / 1000) - 120, summary: "Headlines load from your relay in a moment. If they never appear, the relay may be waking up.", url: "" },
-];
-
+const SAMPLE_NEWS = [{
+  id: "s1",
+  headline: "Waiting for the live news feed…",
+  source: "The Floor",
+  datetime: Math.floor(Date.now() / 1000) - 120,
+  summary: "Headlines load from your relay in a moment. If they never appear, the relay may be waking up.",
+  url: ""
+}];
 function accountValue(pf, prices) {
   let v = pf.cash;
   for (const pos of pf.positions) {
     const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
-    if (pos.side === "long") v += pos.shares * cur;
-    else v -= pos.shares * cur;
+    if (pos.side === "long") v += pos.shares * cur;else v -= pos.shares * cur;
   }
   return v;
 }
-
 function App() {
   const [ready, setReady] = useState(false);
   const [me, setMe] = useState(null);
-  const [pf, setPf] = useState({ cash: START_CASH, positions: [] });
+  const [pf, setPf] = useState({
+    cash: START_CASH,
+    positions: []
+  });
   const [prices, setPrices] = useState({});
   const [opens, setOpens] = useState({});
   const [flash, setFlash] = useState({});
@@ -163,28 +169,42 @@ function App() {
   const [board, setBoard] = useState([]);
   const [news, setNews] = useState(SAMPLE_NEWS);
   const [toast, setToast] = useState(null);
-
-  const pfRef = useRef(pf), pricesRef = useRef(prices), meRef = useRef(me), firstLive = useRef(true);
-  pfRef.current = pf; pricesRef.current = prices; meRef.current = me;
-
+  const pfRef = useRef(pf),
+    pricesRef = useRef(prices),
+    meRef = useRef(me),
+    firstLive = useRef(true);
+  pfRef.current = pf;
+  pricesRef.current = prices;
+  meRef.current = me;
   useEffect(() => {
     (async () => {
-      const base = {}; UNIVERSE.forEach(([s, , p]) => (base[s] = p));
-      setPrices(base); setOpens(base);
+      const base = {};
+      UNIVERSE.forEach(([s,, p]) => base[s] = p);
+      setPrices(base);
+      setOpens(base);
       const savedMe = await sGet("me_v1");
-      if (savedMe) { setMe(savedMe); const savedPf = await sGet("pf_v1"); if (savedPf) setPf(savedPf); }
+      if (savedMe) {
+        setMe(savedMe);
+        const savedPf = await sGet("pf_v1");
+        if (savedPf) setPf(savedPf);
+      }
       setReady(true);
     })();
   }, []);
-
   useEffect(() => {
     if (!ready) return;
     if (!RELAY_URL) {
       const id = setInterval(() => {
-        setPrices((prev) => {
-          const next = {}, f = {};
-          for (const k in prev) { const np = Math.max(0.5, prev[k] * (1 + (Math.random() - 0.5) * 0.004)); next[k] = np; if (np > prev[k]) f[k] = 1; else if (np < prev[k]) f[k] = -1; }
-          setFlash(f); return next;
+        setPrices(prev => {
+          const next = {},
+            f = {};
+          for (const k in prev) {
+            const np = Math.max(0.5, prev[k] * (1 + (Math.random() - 0.5) * 0.004));
+            next[k] = np;
+            if (np > prev[k]) f[k] = 1;else if (np < prev[k]) f[k] = -1;
+          }
+          setFlash(f);
+          return next;
         });
       }, 1000);
       return () => clearInterval(id);
@@ -196,386 +216,1081 @@ function App() {
         const r = await fetch(base + "/api/prices");
         const data = await r.json();
         if (!alive) return;
-        setPrices((prev) => {
+        setPrices(prev => {
           const f = {};
-          if (!firstLive.current) { for (const k in data.prices) { if (prev[k] !== undefined) { if (data.prices[k] > prev[k]) f[k] = 1; else if (data.prices[k] < prev[k]) f[k] = -1; } } }
+          if (!firstLive.current) {
+            for (const k in data.prices) {
+              if (prev[k] !== undefined) {
+                if (data.prices[k] > prev[k]) f[k] = 1;else if (data.prices[k] < prev[k]) f[k] = -1;
+              }
+            }
+          }
           setFlash(f);
           return Object.assign({}, prev, data.prices);
         });
         if (data.opens && Object.keys(data.opens).length) setOpens(data.opens);
         firstLive.current = false;
         setFeed("live");
-      } catch (e) { if (alive) setFeed("connecting"); }
+      } catch (e) {
+        if (alive) setFeed("connecting");
+      }
     };
     poll();
     const id = setInterval(poll, 1500);
-    return () => { alive = false; clearInterval(id); };
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, [ready]);
-
   useEffect(() => {
     if (!Object.keys(flash).length) return;
     const t = setTimeout(() => setFlash({}), 450);
     return () => clearTimeout(t);
   }, [flash]);
-
   const pushBoard = useCallback(async () => {
-    const m = meRef.current; if (!m) return;
+    const m = meRef.current;
+    if (!m) return;
     const v = accountValue(pfRef.current, pricesRef.current);
-    await sSet("lb:" + slug(m.name) + "_" + m.uid, { name: m.name, value: v, ret: ((v - START_CASH) / START_CASH) * 100, at: Date.now() });
+    await sSet("lb:" + slug(m.name) + "_" + m.uid, {
+      name: m.name,
+      value: v,
+      ret: (v - START_CASH) / START_CASH * 100,
+      at: Date.now()
+    });
   }, []);
-
   useEffect(() => {
     if (!ready || !me) return;
     const id = setInterval(pushBoard, 8000);
     return () => clearInterval(id);
   }, [ready, me, pushBoard]);
-
   const loadBoard = useCallback(async () => {
     const keys = await sList("lb:");
     const rows = [];
-    for (const k of keys) { const v = await sGet(k); if (v) rows.push(v); }
+    for (const k of keys) {
+      const v = await sGet(k);
+      if (v) rows.push(v);
+    }
     rows.sort((a, b) => b.value - a.value);
     setBoard(rows);
   }, []);
-  useEffect(() => { if (view === "leaderboard") loadBoard(); }, [view, loadBoard]);
-
+  useEffect(() => {
+    if (view === "leaderboard") loadBoard();
+  }, [view, loadBoard]);
   useEffect(() => {
     if (!ready || !RELAY_URL) return;
     let alive = true;
     const base = RELAY_URL.replace(/\/$/, "");
     const load = async () => {
-      try { const r = await fetch(base + "/api/news"); const data = await r.json(); if (alive && Array.isArray(data.items) && data.items.length) setNews(data.items); } catch (e) {}
+      try {
+        const r = await fetch(base + "/api/news");
+        const data = await r.json();
+        if (alive && Array.isArray(data.items) && data.items.length) setNews(data.items);
+      } catch (e) {}
     };
     load();
     const id = setInterval(load, 60000);
-    return () => { alive = false; clearInterval(id); };
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, [ready]);
-
-  const flashToast = (msg, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2600); };
-
-  const join = async (name) => {
-    const m = { uid: uid(), name: name.trim() };
-    const fresh = { cash: START_CASH, positions: [] };
-    setMe(m); setPf(fresh); meRef.current = m; pfRef.current = fresh;
-    await sSet("me_v1", m); await sSet("pf_v1", fresh); await pushBoard();
+  const flashToast = (msg, ok = true) => {
+    setToast({
+      msg,
+      ok
+    });
+    setTimeout(() => setToast(null), 2600);
   };
-  const savePf = async (next) => { setPf(next); pfRef.current = next; await sSet("pf_v1", next); await pushBoard(); };
-
+  const join = async name => {
+    const m = {
+      uid: uid(),
+      name: name.trim()
+    };
+    const fresh = {
+      cash: START_CASH,
+      positions: []
+    };
+    setMe(m);
+    setPf(fresh);
+    meRef.current = m;
+    pfRef.current = fresh;
+    await sSet("me_v1", m);
+    await sSet("pf_v1", fresh);
+    await pushBoard();
+  };
+  const savePf = async next => {
+    setPf(next);
+    pfRef.current = next;
+    await sSet("pf_v1", next);
+    await pushBoard();
+  };
   const openPosition = async (symbol, side, shares) => {
-    const p = prices[symbol]; const notional = shares * p;
-    const next = Object.assign({}, pf, { positions: pf.positions.map((x) => Object.assign({}, x)) });
-    if (side === "long") { if (notional > next.cash) return flashToast("Not enough cash for that buy.", false); next.cash -= notional; }
-    else { const val = accountValue(pf, prices); if (notional > val) return flashToast("Short too large for your account.", false); next.cash += notional; }
-    const ex = next.positions.find((x) => x.symbol === symbol && x.side === side);
-    if (ex) { const tot = ex.shares + shares; ex.avgPrice = (ex.avgPrice * ex.shares + p * shares) / tot; ex.shares = tot; }
-    else next.positions.push({ symbol, side, shares, avgPrice: p });
+    const p = prices[symbol];
+    const notional = shares * p;
+    const next = Object.assign({}, pf, {
+      positions: pf.positions.map(x => Object.assign({}, x))
+    });
+    if (side === "long") {
+      if (notional > next.cash) return flashToast("Not enough cash for that buy.", false);
+      next.cash -= notional;
+    } else {
+      const val = accountValue(pf, prices);
+      if (notional > val) return flashToast("Short too large for your account.", false);
+      next.cash += notional;
+    }
+    const ex = next.positions.find(x => x.symbol === symbol && x.side === side);
+    if (ex) {
+      const tot = ex.shares + shares;
+      ex.avgPrice = (ex.avgPrice * ex.shares + p * shares) / tot;
+      ex.shares = tot;
+    } else next.positions.push({
+      symbol,
+      side,
+      shares,
+      avgPrice: p
+    });
     await savePf(next);
     flashToast((side === "long" ? "Bought " : "Shorted ") + shares + " " + symbol + " @ " + price(p));
     setTrade(null);
   };
-  const closePosition = async (pos) => {
-    const p = prices[pos.symbol]; const next = Object.assign({}, pf, { positions: pf.positions.filter((x) => x !== pos) });
-    if (pos.side === "long") next.cash += pos.shares * p; else next.cash -= pos.shares * p;
+  const closePosition = async pos => {
+    const p = prices[pos.symbol];
+    const next = Object.assign({}, pf, {
+      positions: pf.positions.filter(x => x !== pos)
+    });
+    if (pos.side === "long") next.cash += pos.shares * p;else next.cash -= pos.shares * p;
     await savePf(next);
     const pnl = pos.side === "long" ? (p - pos.avgPrice) * pos.shares : (pos.avgPrice - p) * pos.shares;
     flashToast("Closed " + pos.symbol + " · " + (pnl >= 0 ? "profit " : "loss ") + money(Math.abs(pnl)), pnl >= 0);
   };
-
-  if (!ready) return <Shell><div style={{ color: T.muted, padding: 40 }}>Loading the floor…</div></Shell>;
-  if (!me) return <Shell><Join onJoin={join} /></Shell>;
-
+  if (!ready) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      padding: 40
+    }
+  }, "Loading the floor…"));
+  if (!me) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Join, {
+    onJoin: join
+  }));
   const val = accountValue(pf, prices);
-  const ret = ((val - START_CASH) / START_CASH) * 100;
-
-  return (
-    <Shell>
-      <TopBar me={me} val={val} ret={ret} feed={feed} />
-      <Nav view={view} setView={setView} />
-      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 18px 60px" }}>
-        {view === "market" && <Market prices={prices} opens={opens} flash={flash} onTrade={setTrade} />}
-        {view === "portfolio" && <Portfolio pf={pf} prices={prices} val={val} ret={ret} onClose={closePosition} setView={setView} />}
-        {view === "leaderboard" && <Leaderboard board={board} me={me} onRefresh={loadBoard} />}
-        {view === "news" && <News news={news} feed={feed} />}
-        {view === "learn" && <Learn />}
-      </div>
-      {trade && <TradeModal trade={trade} prices={prices} pf={pf} onClose={() => setTrade(null)} onConfirm={openPosition} />}
-      {toast && <Toast toast={toast} />}
-    </Shell>
-  );
+  const ret = (val - START_CASH) / START_CASH * 100;
+  return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(TopBar, {
+    me: me,
+    val: val,
+    ret: ret,
+    feed: feed
+  }), /*#__PURE__*/React.createElement(Nav, {
+    view: view,
+    setView: setView
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 1040,
+      margin: "0 auto",
+      padding: "0 18px 60px"
+    }
+  }, view === "market" && /*#__PURE__*/React.createElement(Market, {
+    prices: prices,
+    opens: opens,
+    flash: flash,
+    onTrade: setTrade
+  }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
+    pf: pf,
+    prices: prices,
+    val: val,
+    ret: ret,
+    onClose: closePosition,
+    setView: setView
+  }), view === "leaderboard" && /*#__PURE__*/React.createElement(Leaderboard, {
+    board: board,
+    me: me,
+    onRefresh: loadBoard
+  }), view === "news" && /*#__PURE__*/React.createElement(News, {
+    news: news,
+    feed: feed
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null)), trade && /*#__PURE__*/React.createElement(TradeModal, {
+    trade: trade,
+    prices: prices,
+    pf: pf,
+    onClose: () => setTrade(null),
+    onConfirm: openPosition
+  }), toast && /*#__PURE__*/React.createElement(Toast, {
+    toast: toast
+  }));
 }
-
-function Shell({ children }) {
-  return <div style={{ minHeight: "100vh", background: T.bg, color: T.text }}>{children}</div>;
+function Shell({
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      background: T.bg,
+      color: T.text
+    }
+  }, children);
 }
-
-function TopBar({ me, val, ret, feed }) {
+function TopBar({
+  me,
+  val,
+  ret,
+  feed
+}) {
   const good = ret >= 0;
-  const status = feed === "live" ? { dot: T.up, label: "LIVE" } : feed === "connecting" ? { dot: T.gold, label: "CONNECTING" } : { dot: T.faint, label: "SIMULATED" };
-  return (
-    <div style={{ borderBottom: "1px solid " + T.line, background: T.bg, position: "sticky", top: 0, zIndex: 20 }}>
-      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 7, background: T.gold, display: "grid", placeItems: "center", color: "#12140f", fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>▲</div>
-          <div>
-            <div style={{ fontWeight: 700, letterSpacing: "0.02em", lineHeight: 1 }}>THE FLOOR</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: status.dot, display: "inline-block" }} />
-              <span style={{ fontSize: 11, color: T.faint, letterSpacing: "0.14em" }}>{status.label}</span>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: T.muted, letterSpacing: "0.08em" }}>ACCOUNT VALUE</div>
-            <div className="mono" style={{ fontSize: 20, fontWeight: 600 }}>{money(val)}</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: T.muted, letterSpacing: "0.08em" }}>RETURN</div>
-            <div className="mono" style={{ fontSize: 20, fontWeight: 600, color: good ? T.up : T.down }}>{pct(ret)}</div>
-          </div>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: T.panel2, border: "1px solid " + T.line, display: "grid", placeItems: "center", fontWeight: 600 }}>{me.name.slice(0, 1).toUpperCase()}</div>
-        </div>
-      </div>
-    </div>
-  );
+  const status = feed === "live" ? {
+    dot: T.up,
+    label: "LIVE"
+  } : feed === "connecting" ? {
+    dot: T.gold,
+    label: "CONNECTING"
+  } : {
+    dot: T.faint,
+    label: "SIMULATED"
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderBottom: "1px solid " + T.line,
+      background: T.bg,
+      position: "sticky",
+      top: 0,
+      zIndex: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 1040,
+      margin: "0 auto",
+      padding: "16px 18px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 30,
+      height: 30,
+      borderRadius: 7,
+      background: T.gold,
+      display: "grid",
+      placeItems: "center",
+      color: "#12140f",
+      fontWeight: 700,
+      fontFamily: "'JetBrains Mono', monospace"
+    }
+  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      letterSpacing: "0.02em",
+      lineHeight: 1
+    }
+  }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 6,
+      height: 6,
+      borderRadius: "50%",
+      background: status.dot,
+      display: "inline-block"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      letterSpacing: "0.14em"
+    }
+  }, status.label)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 22
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.muted,
+      letterSpacing: "0.08em"
+    }
+  }, "ACCOUNT VALUE"), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 20,
+      fontWeight: 600
+    }
+  }, money(val))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.muted,
+      letterSpacing: "0.08em"
+    }
+  }, "RETURN"), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 20,
+      fontWeight: 600,
+      color: good ? T.up : T.down
+    }
+  }, pct(ret))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: "50%",
+      background: T.panel2,
+      border: "1px solid " + T.line,
+      display: "grid",
+      placeItems: "center",
+      fontWeight: 600
+    }
+  }, me.name.slice(0, 1).toUpperCase()))));
 }
-
-function Nav({ view, setView }) {
+function Nav({
+  view,
+  setView
+}) {
   const tabs = [["market", "Market"], ["portfolio", "Portfolio"], ["leaderboard", "Leaderboard"], ["news", "News"], ["learn", "Learn"]];
-  return (
-    <div style={{ borderBottom: "1px solid " + T.line, background: T.bg, position: "sticky", top: 64, zIndex: 19 }}>
-      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 12px", display: "flex", gap: 4 }}>
-        {tabs.map(([k, label]) => (
-          <button key={k} onClick={() => setView(k)} className="tab" style={{ color: view === k ? T.text : T.muted, borderBottom: "2px solid " + (view === k ? T.gold : "transparent") }}>{label}</button>
-        ))}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderBottom: "1px solid " + T.line,
+      background: T.bg,
+      position: "sticky",
+      top: 64,
+      zIndex: 19
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 1040,
+      margin: "0 auto",
+      padding: "0 12px",
+      display: "flex",
+      gap: 4
+    }
+  }, tabs.map(([k, label]) => /*#__PURE__*/React.createElement("button", {
+    key: k,
+    onClick: () => setView(k),
+    className: "tab",
+    style: {
+      color: view === k ? T.text : T.muted,
+      borderBottom: "2px solid " + (view === k ? T.gold : "transparent")
+    }
+  }, label))));
 }
-
-function Join({ onJoin }) {
+function Join({
+  onJoin
+}) {
   const [name, setName] = useState("");
-  return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 400 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 26 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 9, background: T.gold, display: "grid", placeItems: "center", color: "#12140f", fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: 20 }}>▲</div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: "0.02em" }}>THE FLOOR</div>
-            <div style={{ fontSize: 11, color: T.faint, letterSpacing: "0.14em" }}>SCHOOL STOCK CLUB</div>
-          </div>
-        </div>
-        <h1 style={{ fontSize: 26, fontWeight: 600, margin: "0 0 8px" }}>Join the club</h1>
-        <p style={{ color: T.muted, margin: "0 0 22px", lineHeight: 1.5, fontSize: 14 }}>Pick a name for your account. You start with <span className="mono" style={{ color: T.text }}>{money(START_CASH)}</span> in simulated cash. No real money, all bragging rights.</p>
-        <label style={{ fontSize: 12, color: T.muted, letterSpacing: "0.06em" }}>DISPLAY NAME</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Lea R." onKeyDown={(e) => e.key === "Enter" && name.trim() && onJoin(name)} style={inputStyle} />
-        <button disabled={!name.trim()} onClick={() => name.trim() && onJoin(name)} className="primary" style={{ marginTop: 16, width: "100%", opacity: name.trim() ? 1 : 0.4 }}>Enter the floor</button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 400
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 26
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 9,
+      background: T.gold,
+      display: "grid",
+      placeItems: "center",
+      color: "#12140f",
+      fontWeight: 700,
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: 20
+    }
+  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 22,
+      letterSpacing: "0.02em"
+    }
+  }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      letterSpacing: "0.14em"
+    }
+  }, "SCHOOL STOCK CLUB"))), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 26,
+      fontWeight: 600,
+      margin: "0 0 8px"
+    }
+  }, "Join the club"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      margin: "0 0 22px",
+      lineHeight: 1.5,
+      fontSize: 14
+    }
+  }, "Pick a name for your account. You start with ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, money(START_CASH)), " in simulated cash. No real money, all bragging rights."), /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.06em"
+    }
+  }, "DISPLAY NAME"), /*#__PURE__*/React.createElement("input", {
+    value: name,
+    onChange: e => setName(e.target.value),
+    placeholder: "e.g. Lea R.",
+    onKeyDown: e => e.key === "Enter" && name.trim() && onJoin(name),
+    style: inputStyle
+  }), /*#__PURE__*/React.createElement("button", {
+    disabled: !name.trim(),
+    onClick: () => name.trim() && onJoin(name),
+    className: "primary",
+    style: {
+      marginTop: 16,
+      width: "100%",
+      opacity: name.trim() ? 1 : 0.4
+    }
+  }, "Enter the floor")));
 }
-
-function Market({ prices, opens, flash, onTrade }) {
+function Market({
+  prices,
+  opens,
+  flash,
+  onTrade
+}) {
   const [q, setQ] = useState("");
   const rows = UNIVERSE.filter(([s, n]) => (s + n).toLowerCase().indexOf(q.toLowerCase()) !== -1);
-  return (
-    <div style={{ paddingTop: 20 }}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ticker or company…" style={Object.assign({}, inputStyle, { marginTop: 0, marginBottom: 16 })} />
-      <div style={{ border: "1px solid " + T.line, borderRadius: 12, overflow: "hidden" }}>
-        <div className="mkt-head"><span>Symbol</span><span className="r">Price</span><span className="r">Today</span><span className="r act">Trade</span></div>
-        {rows.map(([s, n]) => {
-          const p = prices[s], o = opens[s], ch = ((p - o) / o) * 100, f = flash[s];
-          return (
-            <div key={s} className="mkt-row">
-              <span><span style={{ fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{s}</span><span style={{ color: T.faint, fontSize: 12, marginLeft: 10 }}>{n}</span></span>
-              <span className="r mono" style={{ background: f === 1 ? "rgba(63,185,80,.14)" : f === -1 ? "rgba(240,82,62,.14)" : "transparent", borderRadius: 5, transition: "background .3s" }}>{price(p)}</span>
-              <span className="r mono" style={{ color: ch >= 0 ? T.up : T.down }}>{pct(ch)}</span>
-              <span className="r act" style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                <button className="mini buy" onClick={() => onTrade({ symbol: s, side: "long" })}>Buy</button>
-                <button className="mini short" onClick={() => onTrade({ symbol: s, side: "short" })}>Short</button>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: q,
+    onChange: e => setQ(e.target.value),
+    placeholder: "Search ticker or company…",
+    style: Object.assign({}, inputStyle, {
+      marginTop: 0,
+      marginBottom: 16
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mkt-head"
+  }, /*#__PURE__*/React.createElement("span", null, "Symbol"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Price"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Today"), /*#__PURE__*/React.createElement("span", {
+    className: "r act"
+  }, "Trade")), rows.map(([s, n]) => {
+    const p = prices[s],
+      o = opens[s],
+      ch = (p - o) / o * 100,
+      f = flash[s];
+    return /*#__PURE__*/React.createElement("div", {
+      key: s,
+      className: "mkt-row"
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontFamily: "'JetBrains Mono', monospace"
+      }
+    }, s), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.faint,
+        fontSize: 12,
+        marginLeft: 10
+      }
+    }, n)), /*#__PURE__*/React.createElement("span", {
+      className: "r mono",
+      style: {
+        background: f === 1 ? "rgba(63,185,80,.14)" : f === -1 ? "rgba(240,82,62,.14)" : "transparent",
+        borderRadius: 5,
+        transition: "background .3s"
+      }
+    }, price(p)), /*#__PURE__*/React.createElement("span", {
+      className: "r mono",
+      style: {
+        color: ch >= 0 ? T.up : T.down
+      }
+    }, pct(ch)), /*#__PURE__*/React.createElement("span", {
+      className: "r act",
+      style: {
+        display: "flex",
+        gap: 6,
+        justifyContent: "flex-end"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "mini buy",
+      onClick: () => onTrade({
+        symbol: s,
+        side: "long"
+      })
+    }, "Buy"), /*#__PURE__*/React.createElement("button", {
+      className: "mini short",
+      onClick: () => onTrade({
+        symbol: s,
+        side: "short"
+      })
+    }, "Short")));
+  })));
 }
-
-function Portfolio({ pf, prices, val, ret, onClose, setView }) {
+function Portfolio({
+  pf,
+  prices,
+  val,
+  ret,
+  onClose,
+  setView
+}) {
   const good = ret >= 0;
   const totalPnl = val - START_CASH;
-  return (
-    <div style={{ paddingTop: 20 }}>
-      <div className="cards">
-        <Stat label="ACCOUNT VALUE" value={money(val)} />
-        <Stat label="CASH" value={money(pf.cash)} />
-        <Stat label="TOTAL P&L" value={money(totalPnl)} color={totalPnl >= 0 ? T.up : T.down} />
-        <Stat label="RETURN" value={pct(ret)} color={good ? T.up : T.down} />
-      </div>
-      <h2 style={secH}>Positions</h2>
-      {pf.positions.length === 0 ? (
-        <div style={empty}>Nothing open yet. Head to the <button className="link" onClick={() => setView("market")}>Market</button> and place your first trade.</div>
-      ) : (
-        <div style={{ border: "1px solid " + T.line, borderRadius: 12, overflow: "hidden" }}>
-          <div className="pos-head"><span>Position</span><span className="r">Qty</span><span className="r">Avg</span><span className="r">Now</span><span className="r">P&L</span><span className="r act"></span></div>
-          {pf.positions.map((pos, i) => {
-            const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
-            const pnl = pos.side === "long" ? (cur - pos.avgPrice) * pos.shares : (pos.avgPrice - cur) * pos.shares;
-            const pnlPct = ((cur - pos.avgPrice) / pos.avgPrice) * 100 * (pos.side === "long" ? 1 : -1);
-            return (
-              <div key={i} className="pos-row">
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{pos.symbol}</span><span className={pos.side === "long" ? "badge long" : "badge short"}>{pos.side.toUpperCase()}</span></span>
-                <span className="r mono">{pos.shares}</span>
-                <span className="r mono" style={{ color: T.muted }}>{price(pos.avgPrice)}</span>
-                <span className="r mono">{price(cur)}</span>
-                <span className="r mono" style={{ color: pnl >= 0 ? T.up : T.down }}>{money(pnl)}<span style={{ fontSize: 11, opacity: 0.75, marginLeft: 6 }}>{pct(pnlPct)}</span></span>
-                <span className="r act"><button className="mini close" onClick={() => onClose(pos)}>Close</button></span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cards"
+  }, /*#__PURE__*/React.createElement(Stat, {
+    label: "ACCOUNT VALUE",
+    value: money(val)
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "CASH",
+    value: money(pf.cash)
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "TOTAL P&L",
+    value: money(totalPnl),
+    color: totalPnl >= 0 ? T.up : T.down
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "RETURN",
+    value: pct(ret),
+    color: good ? T.up : T.down
+  })), /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Positions"), pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "Nothing open yet. Head to the ", /*#__PURE__*/React.createElement("button", {
+    className: "link",
+    onClick: () => setView("market")
+  }, "Market"), " and place your first trade.") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "pos-head"
+  }, /*#__PURE__*/React.createElement("span", null, "Position"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Qty"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Avg"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Now"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "P&L"), /*#__PURE__*/React.createElement("span", {
+    className: "r act"
+  })), pf.positions.map((pos, i) => {
+    const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
+    const pnl = pos.side === "long" ? (cur - pos.avgPrice) * pos.shares : (pos.avgPrice - cur) * pos.shares;
+    const pnlPct = (cur - pos.avgPrice) / pos.avgPrice * 100 * (pos.side === "long" ? 1 : -1);
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "pos-row"
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "'JetBrains Mono', monospace",
+        fontWeight: 600
+      }
+    }, pos.symbol), /*#__PURE__*/React.createElement("span", {
+      className: pos.side === "long" ? "badge long" : "badge short"
+    }, pos.side.toUpperCase())), /*#__PURE__*/React.createElement("span", {
+      className: "r mono"
+    }, pos.shares), /*#__PURE__*/React.createElement("span", {
+      className: "r mono",
+      style: {
+        color: T.muted
+      }
+    }, price(pos.avgPrice)), /*#__PURE__*/React.createElement("span", {
+      className: "r mono"
+    }, price(cur)), /*#__PURE__*/React.createElement("span", {
+      className: "r mono",
+      style: {
+        color: pnl >= 0 ? T.up : T.down
+      }
+    }, money(pnl), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        opacity: 0.75,
+        marginLeft: 6
+      }
+    }, pct(pnlPct))), /*#__PURE__*/React.createElement("span", {
+      className: "r act"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "mini close",
+      onClick: () => onClose(pos)
+    }, "Close")));
+  })));
 }
-
-function Stat({ label, value, color }) {
-  return (
-    <div style={{ background: T.panel, border: "1px solid " + T.line, borderRadius: 12, padding: "14px 16px" }}>
-      <div style={{ fontSize: 11, color: T.muted, letterSpacing: "0.08em" }}>{label}</div>
-      <div className="mono" style={{ fontSize: 21, fontWeight: 600, marginTop: 6, color: color || T.text }}>{value}</div>
-    </div>
-  );
+function Stat({
+  label,
+  value,
+  color
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.panel,
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      padding: "14px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.muted,
+      letterSpacing: "0.08em"
+    }
+  }, label), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 21,
+      fontWeight: 600,
+      marginTop: 6,
+      color: color || T.text
+    }
+  }, value));
 }
-
-function Leaderboard({ board, me, onRefresh }) {
-  return (
-    <div style={{ paddingTop: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={Object.assign({}, secH, { margin: 0 })}>Standings</h2>
-        <button className="ghost" onClick={onRefresh}>Refresh</button>
-      </div>
-      {board.length === 0 ? (
-        <div style={empty}>Make a trade to appear here.</div>
-      ) : (
-        <div style={{ border: "1px solid " + T.line, borderRadius: 12, overflow: "hidden" }}>
-          {board.map((r, i) => {
-            const mine = r.name === me.name;
-            return (
-              <div key={i} className="lb-row" style={{ background: mine ? "rgba(230,169,60,.08)" : "transparent" }}>
-                <span className="mono" style={{ width: 34, color: i < 3 ? T.gold : T.faint, fontWeight: 700 }}>{i + 1}</span>
-                <span style={{ flex: 1, fontWeight: mine ? 600 : 500 }}>{r.name}{mine && <span style={{ color: T.gold, fontSize: 11, marginLeft: 8 }}>YOU</span>}</span>
-                <span className="mono" style={{ marginRight: 20 }}>{money(r.value)}</span>
-                <span className="mono" style={{ width: 88, textAlign: "right", color: r.ret >= 0 ? T.up : T.down }}>{pct(r.ret)}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <p style={{ color: T.faint, fontSize: 12, marginTop: 14, lineHeight: 1.5 }}>Shared standings across the whole club arrive with the accounts step. For now this shows scores saved on this device.</p>
-    </div>
-  );
+function Leaderboard({
+  board,
+  me,
+  onRefresh
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: Object.assign({}, secH, {
+      margin: 0
+    })
+  }, "Standings"), /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    onClick: onRefresh
+  }, "Refresh")), board.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "Make a trade to appear here.") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      overflow: "hidden"
+    }
+  }, board.map((r, i) => {
+    const mine = r.name === me.name;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "lb-row",
+      style: {
+        background: mine ? "rgba(230,169,60,.08)" : "transparent"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        width: 34,
+        color: i < 3 ? T.gold : T.faint,
+        fontWeight: 700
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        fontWeight: mine ? 600 : 500
+      }
+    }, r.name, mine && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.gold,
+        fontSize: 11,
+        marginLeft: 8
+      }
+    }, "YOU")), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        marginRight: 20
+      }
+    }, money(r.value)), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        width: 88,
+        textAlign: "right",
+        color: r.ret >= 0 ? T.up : T.down
+      }
+    }, pct(r.ret)));
+  })), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.faint,
+      fontSize: 12,
+      marginTop: 14,
+      lineHeight: 1.5
+    }
+  }, "Shared standings across the whole club arrive with the accounts step. For now this shows scores saved on this device."));
 }
-
-function News({ news, feed }) {
-  return (
-    <div style={{ paddingTop: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={Object.assign({}, secH, { margin: 0 })}>Market news</h2>
-        <span style={{ fontSize: 11, color: T.faint, letterSpacing: "0.1em" }}>{feed === "live" ? "LIVE FEED" : "CONNECTING"}</span>
-      </div>
-      <div style={{ display: "grid", gap: 10 }}>{news.map((n) => <NewsItem key={n.id} n={n} />)}</div>
-    </div>
-  );
+function News({
+  news,
+  feed
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: Object.assign({}, secH, {
+      margin: 0
+    })
+  }, "Market news"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      letterSpacing: "0.1em"
+    }
+  }, feed === "live" ? "LIVE FEED" : "CONNECTING")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gap: 10
+    }
+  }, news.map(n => /*#__PURE__*/React.createElement(NewsItem, {
+    key: n.id,
+    n: n
+  }))));
 }
-
-function NewsItem({ n }) {
+function NewsItem({
+  n
+}) {
   const [imgOk, setImgOk] = useState(true);
   const Wrapper = n.url ? "a" : "div";
-  const wrapProps = n.url ? { href: n.url, target: "_blank", rel: "noopener noreferrer" } : {};
-  return (
-    <Wrapper {...wrapProps} className="news-item">
-      {n.image && imgOk && <img src={n.image} alt="" onError={() => setImgOk(false)} style={{ width: 96, height: 72, objectFit: "cover", borderRadius: 8, flexShrink: 0, background: T.panel2 }} />}
-      <div style={{ minWidth: 0 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
-          <span style={{ fontSize: 11, color: T.gold, fontWeight: 600, letterSpacing: "0.04em" }}>{n.source}</span>
-          <span style={{ fontSize: 11, color: T.faint }}>· {ago(n.datetime)}</span>
-        </div>
-        <div style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.35, marginBottom: 4 }}>{n.headline}</div>
-        {n.summary && <div className="clamp2" style={{ color: T.muted, fontSize: 13, lineHeight: 1.5 }}>{n.summary}</div>}
-      </div>
-    </Wrapper>
-  );
+  const wrapProps = n.url ? {
+    href: n.url,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  } : {};
+  return /*#__PURE__*/React.createElement(Wrapper, {
+    ...wrapProps,
+    className: "news-item"
+  }, n.image && imgOk && /*#__PURE__*/React.createElement("img", {
+    src: n.image,
+    alt: "",
+    onError: () => setImgOk(false),
+    style: {
+      width: 96,
+      height: 72,
+      objectFit: "cover",
+      borderRadius: 8,
+      flexShrink: 0,
+      background: T.panel2
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center",
+      marginBottom: 5
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: T.gold,
+      fontWeight: 600,
+      letterSpacing: "0.04em"
+    }
+  }, n.source), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: T.faint
+    }
+  }, "· ", ago(n.datetime))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 15,
+      lineHeight: 1.35,
+      marginBottom: 4
+    }
+  }, n.headline), n.summary && /*#__PURE__*/React.createElement("div", {
+    className: "clamp2",
+    style: {
+      color: T.muted,
+      fontSize: 13,
+      lineHeight: 1.5
+    }
+  }, n.summary)));
 }
-
 function Learn() {
   const [q, setQ] = useState("");
   const rows = GLOSSARY.filter(([t, d]) => (t + d).toLowerCase().indexOf(q.toLowerCase()) !== -1);
-  return (
-    <div style={{ paddingTop: 20 }}>
-      <h2 style={secH}>Finance dictionary</h2>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a term…" style={Object.assign({}, inputStyle, { marginTop: 0, marginBottom: 18 })} />
-      <div style={{ display: "grid", gap: 10 }}>
-        {rows.map(([term, def]) => (
-          <div key={term} style={{ background: T.panel, border: "1px solid " + T.line, borderRadius: 10, padding: "14px 16px" }}>
-            <div style={{ fontWeight: 600, marginBottom: 5, color: T.gold }}>{term}</div>
-            <div style={{ color: T.muted, fontSize: 14, lineHeight: 1.55 }}>{def}</div>
-          </div>
-        ))}
-        {rows.length === 0 && <div style={empty}>No term matches that. Try another word.</div>}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Finance dictionary"), /*#__PURE__*/React.createElement("input", {
+    value: q,
+    onChange: e => setQ(e.target.value),
+    placeholder: "Search a term…",
+    style: Object.assign({}, inputStyle, {
+      marginTop: 0,
+      marginBottom: 18
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gap: 10
+    }
+  }, rows.map(([term, def]) => /*#__PURE__*/React.createElement("div", {
+    key: term,
+    style: {
+      background: T.panel,
+      border: "1px solid " + T.line,
+      borderRadius: 10,
+      padding: "14px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      marginBottom: 5,
+      color: T.gold
+    }
+  }, term), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 14,
+      lineHeight: 1.55
+    }
+  }, def))), rows.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "No term matches that. Try another word.")));
 }
-
-function TradeModal({ trade, prices, pf, onClose, onConfirm }) {
-  const { symbol, side } = trade;
+function TradeModal({
+  trade,
+  prices,
+  pf,
+  onClose,
+  onConfirm
+}) {
+  const {
+    symbol,
+    side
+  } = trade;
   const p = prices[symbol];
   const [qty, setQty] = useState("");
   const shares = Math.floor(Number(qty) || 0);
   const notional = shares * p;
-  const nameRow = UNIVERSE.find((u) => u[0] === symbol);
+  const nameRow = UNIVERSE.find(u => u[0] === symbol);
   const name = nameRow ? nameRow[1] : symbol;
   const buy = side === "long";
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}><span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 20 }}>{symbol}</span><span className={buy ? "badge long" : "badge short"}>{buy ? "BUY" : "SHORT"}</span></div>
-            <div style={{ color: T.faint, fontSize: 13, marginTop: 4 }}>{name}</div>
-          </div>
-          <button className="x" onClick={onClose}>×</button>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderTop: "1px solid " + T.line, borderBottom: "1px solid " + T.line }}>
-          <span style={{ color: T.muted, fontSize: 13 }}>Live price</span><span className="mono">{price(p)}</span>
-        </div>
-        <label style={{ fontSize: 12, color: T.muted, letterSpacing: "0.06em", display: "block", marginTop: 16 }}>SHARES</label>
-        <input value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ""))} placeholder="0" style={inputStyle} autoFocus />
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 14, marginBottom: 4 }}>
-          <span style={{ color: T.muted, fontSize: 13 }}>{buy ? "Estimated cost" : "Proceeds received"}</span><span className="mono">{money(notional)}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ color: T.muted, fontSize: 13 }}>Cash available</span><span className="mono" style={{ color: T.muted }}>{money(pf.cash)}</span>
-        </div>
-        <button className="primary" disabled={shares < 1} style={{ width: "100%", marginTop: 20, opacity: shares < 1 ? 0.4 : 1, background: buy ? T.up : T.down, color: "#0c0f0a" }} onClick={() => onConfirm(symbol, side, shares)}>
-          {(buy ? "Buy " : "Short ") + (shares || "") + " " + symbol}
-        </button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "overlay",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'JetBrains Mono', monospace",
+      fontWeight: 700,
+      fontSize: 20
+    }
+  }, symbol), /*#__PURE__*/React.createElement("span", {
+    className: buy ? "badge long" : "badge short"
+  }, buy ? "BUY" : "SHORT")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.faint,
+      fontSize: 13,
+      marginTop: 4
+    }
+  }, name)), /*#__PURE__*/React.createElement("button", {
+    className: "x",
+    onClick: onClose
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "10px 0",
+      borderTop: "1px solid " + T.line,
+      borderBottom: "1px solid " + T.line
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, "Live price"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, price(p))), /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.06em",
+      display: "block",
+      marginTop: 16
+    }
+  }, "SHARES"), /*#__PURE__*/React.createElement("input", {
+    value: qty,
+    onChange: e => setQty(e.target.value.replace(/[^0-9]/g, "")),
+    placeholder: "0",
+    style: inputStyle,
+    autoFocus: true
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: 14,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, buy ? "Estimated cost" : "Proceeds received"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, money(notional))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, "Cash available"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.muted
+    }
+  }, money(pf.cash))), /*#__PURE__*/React.createElement("button", {
+    className: "primary",
+    disabled: shares < 1,
+    style: {
+      width: "100%",
+      marginTop: 20,
+      opacity: shares < 1 ? 0.4 : 1,
+      background: buy ? T.up : T.down,
+      color: "#0c0f0a"
+    },
+    onClick: () => onConfirm(symbol, side, shares)
+  }, (buy ? "Buy " : "Short ") + (shares || "") + " " + symbol)));
 }
-
-function Toast({ toast }) {
-  return <div className="toast" style={{ borderColor: toast.ok ? "rgba(63,185,80,.4)" : "rgba(240,82,62,.4)" }}><span style={{ color: toast.ok ? T.up : T.down, marginRight: 8 }}>{toast.ok ? "✓" : "✕"}</span>{toast.msg}</div>;
+function Toast({
+  toast
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "toast",
+    style: {
+      borderColor: toast.ok ? "rgba(63,185,80,.4)" : "rgba(240,82,62,.4)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: toast.ok ? T.up : T.down,
+      marginRight: 8
+    }
+  }, toast.ok ? "✓" : "✕"), toast.msg);
 }
-
-const inputStyle = { width: "100%", marginTop: 8, padding: "12px 14px", background: T.panel, color: T.text, border: "1px solid " + T.line, borderRadius: 9, fontSize: 15, outline: "none" };
-const secH = { fontSize: 15, fontWeight: 600, color: T.text, letterSpacing: "0.02em", margin: "26px 0 12px" };
-const empty = { color: T.muted, background: T.panel, border: "1px dashed " + T.line, borderRadius: 12, padding: "26px 20px", textAlign: "center", fontSize: 14 };
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+const inputStyle = {
+  width: "100%",
+  marginTop: 8,
+  padding: "12px 14px",
+  background: T.panel,
+  color: T.text,
+  border: "1px solid " + T.line,
+  borderRadius: 9,
+  fontSize: 15,
+  outline: "none"
+};
+const secH = {
+  fontSize: 15,
+  fontWeight: 600,
+  color: T.text,
+  letterSpacing: "0.02em",
+  margin: "26px 0 12px"
+};
+const empty = {
+  color: T.muted,
+  background: T.panel,
+  border: "1px dashed " + T.line,
+  borderRadius: 12,
+  padding: "26px 20px",
+  textAlign: "center",
+  fontSize: 14
+};
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
 </html>
