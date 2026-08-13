@@ -6,6 +6,7 @@
 <title>The Floor — Stock Club</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -68,13 +69,22 @@ const {
 } = React;
 
 /* ------------------------------------------------------------------ *
- *  THE FLOOR — stock-club trading simulator (hosted, live edition)
- *  Live prices + news from your relay. Portfolio saves on this device.
- *  Shared leaderboard arrives with the accounts step.
+ *  THE FLOOR — stock-club trading simulator (cloud edition)
+ *  Magic-link login + shared leaderboard + cloud portfolios (Supabase)
+ *  Live prices + news from the relay. Search any ticker on demand.
  * ------------------------------------------------------------------ */
 
-const START_CASH = 100000;
 const RELAY_URL = "https://stock-club-relay.onrender.com";
+
+/* ==== SUPABASE CONFIG =============================================== *
+ * The anon public key is SAFE to keep here — it is meant to live in the
+ * app's code. Your database is protected by the security rules (RLS).
+ * Paste your anon public key between the quotes below.               */
+const SUPABASE_URL = "https://ypsttcyxmoedumfjtsfo.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
+const sbReady = SUPABASE_ANON_KEY.indexOf("PASTE_") === -1;
+const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const DEFAULT_CASH = 100000;
 const T = {
   bg: "#0E1116",
   panel: "#161B22",
@@ -89,45 +99,15 @@ const T = {
 };
 const UNIVERSE = [["AAPL", "Apple", 225], ["MSFT", "Microsoft", 430], ["NVDA", "NVIDIA", 130], ["AMZN", "Amazon", 185], ["GOOGL", "Alphabet", 175], ["META", "Meta", 560], ["TSLA", "Tesla", 250], ["AMD", "Adv. Micro Devices", 155], ["NFLX", "Netflix", 680], ["DIS", "Disney", 95], ["JPM", "JPMorgan Chase", 210], ["V", "Visa", 285], ["WMT", "Walmart", 75], ["KO", "Coca-Cola", 62], ["PEP", "PepsiCo", 170], ["XOM", "Exxon Mobil", 115], ["BA", "Boeing", 175], ["NKE", "Nike", 78], ["SBUX", "Starbucks", 95], ["UBER", "Uber", 72], ["PYPL", "PayPal", 68], ["INTC", "Intel", 22], ["GME", "GameStop", 25], ["AMC", "AMC Ent.", 5], ["SPY", "S&P 500 ETF", 555], ["QQQ", "Nasdaq-100 ETF", 480], ["VOO", "Vanguard S&P 500", 510], ["ARKK", "ARK Innovation ETF", 48], ["DIA", "Dow Jones ETF", 415]];
 const GLOSSARY = [["Long", "Buying an asset because you expect the price to go up. You profit when it rises."], ["Short", "Borrowing shares to sell now and buy back later. You profit when the price falls, and lose if it rises."], ["Buy", "Opening or adding to a position by purchasing shares."], ["Sell", "Closing a position by getting rid of shares you own."], ["Put", "An option that gains value when a stock falls. A bet the price drops."], ["Call", "An option that gains value when a stock rises. A bet the price climbs."], ["Option", "A contract to buy or sell a stock at a set price by a set date, without the obligation to."], ["ETF", "Exchange-Traded Fund. One ticker that holds a basket of stocks, so you buy a whole slice of the market at once (e.g. SPY tracks the S&P 500)."], ["Dividend", "A cash payment some companies send shareholders, usually quarterly, from their profits."], ["Bull market", "A stretch where prices are broadly rising and optimism is high."], ["Bear market", "A stretch where prices are broadly falling, often defined as a 20%+ drop."], ["Portfolio", "The full collection of everything you hold, plus your cash."], ["Diversification", "Spreading money across many assets so one bad pick can't sink you."], ["Market order", "An order to trade right now at whatever the current price is."], ["Limit order", "An order that only fills at a price you set or better."], ["Volatility", "How sharply a price swings. High volatility means bigger, faster moves."], ["P/E ratio", "Price divided by earnings per share. A rough gauge of how expensive a stock is versus its profits."], ["Market cap", "Total value of a company: share price times number of shares."], ["IPO", "Initial Public Offering. The first time a company sells shares to the public."], ["Ticker", "The short symbol that identifies a stock, like AAPL for Apple."], ["Bid / Ask", "The bid is the highest price buyers offer; the ask is the lowest price sellers accept."], ["Spread", "The gap between the bid and the ask price."], ["Margin", "Borrowed money from a broker used to trade a larger position than your cash allows."], ["Leverage", "Using borrowed money to amplify a position. It magnifies both gains and losses."], ["Blue chip", "A large, well-established, financially solid company (think Apple or Coca-Cola)."], ["Index fund", "A fund built to mirror a market index rather than beat it, usually with low fees."], ["Volume", "How many shares changed hands in a period. High volume signals strong interest."], ["Liquidity", "How easily you can buy or sell without moving the price. Cash is the most liquid."], ["Capital gain", "The profit when you sell something for more than you paid."], ["Broker", "The platform or firm that executes your trades (Robinhood, Fidelity, and so on)."]];
-
-/* ---- storage: localStorage, kept async-shaped so the app code is unchanged ---- */
-const sGet = k => {
-  try {
-    const v = localStorage.getItem(k);
-    return Promise.resolve(v ? JSON.parse(v) : null);
-  } catch {
-    return Promise.resolve(null);
-  }
-};
-const sSet = (k, v) => {
-  try {
-    localStorage.setItem(k, JSON.stringify(v));
-  } catch (e) {}
-  return Promise.resolve();
-};
-const sList = prefix => {
-  const keys = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.indexOf(prefix) === 0) keys.push(key);
-    }
-  } catch (e) {}
-  return Promise.resolve(keys);
-};
-
-/* ---- helpers ---- */
 const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 });
-const price = n => "$" + n.toLocaleString("en-US", {
+const price = n => "$" + Number(n).toLocaleString("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 });
 const pct = n => (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
-const uid = () => "u" + Math.random().toString(36).slice(2, 10);
-const slug = s => s.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 40);
 const ago = unixSec => {
   const s = Math.max(0, Math.floor(Date.now() / 1000 - unixSec));
   if (s < 60) return s + "s ago";
@@ -139,27 +119,30 @@ const ago = unixSec => {
 };
 const SAMPLE_NEWS = [{
   id: "s1",
-  headline: "Waiting for the live news feed…",
+  headline: "Waiting for the live news feed\u2026",
   source: "The Floor",
   datetime: Math.floor(Date.now() / 1000) - 120,
-  summary: "Headlines load from your relay in a moment. If they never appear, the relay may be waking up.",
+  summary: "Headlines load from your relay in a moment.",
   url: ""
 }];
 function accountValue(pf, prices) {
-  let v = pf.cash;
-  for (const pos of pf.positions) {
+  let v = Number(pf.cash) || 0;
+  for (const pos of pf.positions || []) {
     const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
     if (pos.side === "long") v += pos.shares * cur;else v -= pos.shares * cur;
   }
   return v;
 }
 function App() {
-  const [ready, setReady] = useState(false);
-  const [me, setMe] = useState(null);
+  const [authed, setAuthed] = useState(false); // auth check finished
+  const [user, setUser] = useState(null); // supabase auth user
+  const [me, setMe] = useState(null); // players row
   const [pf, setPf] = useState({
-    cash: START_CASH,
+    cash: DEFAULT_CASH,
     positions: []
   });
+  const [round, setRound] = useState(1);
+  const [startCash, setStartCash] = useState(DEFAULT_CASH);
   const [prices, setPrices] = useState({});
   const [opens, setOpens] = useState({});
   const [flash, setFlash] = useState({});
@@ -170,52 +153,33 @@ function App() {
   const [news, setNews] = useState(SAMPLE_NEWS);
   const [lookups, setLookups] = useState([]);
   const [toast, setToast] = useState(null);
+  const [banner, setBanner] = useState("");
   const pfRef = useRef(pf),
     pricesRef = useRef(prices),
-    meRef = useRef(me),
-    firstLive = useRef(true);
-  const customRefRef = useRef({});
+    firstLive = useRef(true),
+    customRefRef = useRef({});
   pfRef.current = pf;
   pricesRef.current = prices;
-  meRef.current = me;
+  const flashToast = (msg, ok = true) => {
+    setToast({
+      msg,
+      ok
+    });
+    setTimeout(() => setToast(null), 2600);
+  };
+
+  /* ---- prices: seed then poll relay ---- */
   useEffect(() => {
-    (async () => {
-      const base = {};
-      UNIVERSE.forEach(([s,, p]) => base[s] = p);
-      setPrices(base);
-      setOpens(base);
-      const savedMe = await sGet("me_v1");
-      if (savedMe) {
-        setMe(savedMe);
-        const savedPf = await sGet("pf_v1");
-        if (savedPf) setPf(savedPf);
-      }
-      setReady(true);
-    })();
-  }, []);
-  useEffect(() => {
-    if (!ready) return;
-    if (!RELAY_URL) {
-      const id = setInterval(() => {
-        setPrices(prev => {
-          const next = {},
-            f = {};
-          for (const k in prev) {
-            const np = Math.max(0.5, prev[k] * (1 + (Math.random() - 0.5) * 0.004));
-            next[k] = np;
-            if (np > prev[k]) f[k] = 1;else if (np < prev[k]) f[k] = -1;
-          }
-          setFlash(f);
-          return next;
-        });
-      }, 1000);
-      return () => clearInterval(id);
-    }
+    const base = {};
+    UNIVERSE.forEach(([s,, p]) => base[s] = p);
+    setPrices(base);
+    setOpens(base);
+    if (!RELAY_URL) return;
     let alive = true;
-    const base = RELAY_URL.replace(/\/$/, "");
+    const b = RELAY_URL.replace(/\/$/, "");
     const poll = async () => {
       try {
-        const r = await fetch(base + "/api/prices");
+        const r = await fetch(b + "/api/prices");
         const data = await r.json();
         if (!alive) return;
         setPrices(prev => {
@@ -230,7 +194,7 @@ function App() {
           setFlash(f);
           return Object.assign({}, prev, data.prices);
         });
-        if (data.opens && Object.keys(data.opens).length) setOpens(data.opens);
+        if (data.opens && Object.keys(data.opens).length) setOpens(prev => Object.assign({}, prev, data.opens));
         firstLive.current = false;
         setFeed("live");
       } catch (e) {
@@ -243,48 +207,21 @@ function App() {
       alive = false;
       clearInterval(id);
     };
-  }, [ready]);
+  }, []);
   useEffect(() => {
     if (!Object.keys(flash).length) return;
     const t = setTimeout(() => setFlash({}), 450);
     return () => clearTimeout(t);
   }, [flash]);
-  const pushBoard = useCallback(async () => {
-    const m = meRef.current;
-    if (!m) return;
-    const v = accountValue(pfRef.current, pricesRef.current);
-    await sSet("lb:" + slug(m.name) + "_" + m.uid, {
-      name: m.name,
-      value: v,
-      ret: (v - START_CASH) / START_CASH * 100,
-      at: Date.now()
-    });
-  }, []);
+
+  /* ---- news ---- */
   useEffect(() => {
-    if (!ready || !me) return;
-    const id = setInterval(pushBoard, 8000);
-    return () => clearInterval(id);
-  }, [ready, me, pushBoard]);
-  const loadBoard = useCallback(async () => {
-    const keys = await sList("lb:");
-    const rows = [];
-    for (const k of keys) {
-      const v = await sGet(k);
-      if (v) rows.push(v);
-    }
-    rows.sort((a, b) => b.value - a.value);
-    setBoard(rows);
-  }, []);
-  useEffect(() => {
-    if (view === "leaderboard") loadBoard();
-  }, [view, loadBoard]);
-  useEffect(() => {
-    if (!ready || !RELAY_URL) return;
+    if (!RELAY_URL) return;
     let alive = true;
-    const base = RELAY_URL.replace(/\/$/, "");
+    const b = RELAY_URL.replace(/\/$/, "");
     const load = async () => {
       try {
-        const r = await fetch(base + "/api/news");
+        const r = await fetch(b + "/api/news");
         const data = await r.json();
         if (alive && Array.isArray(data.items) && data.items.length) setNews(data.items);
       } catch (e) {}
@@ -295,7 +232,217 @@ function App() {
       alive = false;
       clearInterval(id);
     };
-  }, [ready]);
+  }, []);
+
+  /* ---- refresh held/looked-up custom tickers ---- */
+  useEffect(() => {
+    if (!RELAY_URL) return;
+    let alive = true;
+    const b = RELAY_URL.replace(/\/$/, "");
+    const tick = async () => {
+      const held = (pfRef.current.positions || []).map(p => p.symbol).filter(s => !UNIVERSE.some(u => u[0] === s));
+      const uniq = Array.from(new Set(held.concat(lookups)));
+      const now = Date.now();
+      for (const s of uniq) {
+        if (now - (customRefRef.current[s] || 0) < 10000) continue;
+        customRefRef.current[s] = now;
+        try {
+          const r = await fetch(b + "/api/quote?symbol=" + encodeURIComponent(s));
+          const d = await r.json();
+          if (alive && d && d.price != null) {
+            setPrices(prev => Object.assign({}, prev, {
+              [s]: d.price
+            }));
+            if (d.open != null) setOpens(prev => Object.assign({}, prev, {
+              [s]: d.open
+            }));
+          }
+        } catch (e) {}
+      }
+    };
+    const id = setInterval(tick, 3000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [lookups]);
+
+  /* ---- Supabase: session + data ---- */
+  const loadSettings = async () => {
+    const {
+      data
+    } = await sb.from("settings").select("*").eq("id", 1).single();
+    return data;
+  };
+  const ensurePlayer = async u => {
+    const defName = (u.email || "player").split("@")[0] || "player";
+    await sb.from("players").upsert({
+      id: u.id,
+      name: defName
+    }, {
+      onConflict: "id",
+      ignoreDuplicates: true
+    });
+    const {
+      data
+    } = await sb.from("players").select("*").eq("id", u.id).single();
+    return data;
+  };
+  const loadPortfolio = async (u, rnd, cash0) => {
+    let {
+      data
+    } = await sb.from("portfolios").select("*").eq("player_id", u.id).eq("round", rnd).maybeSingle();
+    if (!data) {
+      const ins = await sb.from("portfolios").insert({
+        player_id: u.id,
+        round: rnd,
+        cash: cash0,
+        positions: []
+      }).select().single();
+      data = ins.data;
+    }
+    return {
+      cash: Number(data.cash),
+      positions: data.positions || []
+    };
+  };
+  const handleSession = async session => {
+    const u = session && session.user ? session.user : null;
+    setUser(u);
+    if (!u) {
+      setMe(null);
+      setAuthed(true);
+      return;
+    }
+    try {
+      const s = await loadSettings();
+      const rnd = s ? s.active_round : 1;
+      const cash0 = s ? Number(s.starting_cash) : DEFAULT_CASH;
+      setRound(rnd);
+      setStartCash(cash0);
+      const player = await ensurePlayer(u);
+      setMe(player);
+      const p = await loadPortfolio(u, rnd, cash0);
+      setPf(p);
+      pfRef.current = p;
+    } catch (e) {
+      setBanner("Trouble loading your data. Try refreshing.");
+    }
+    setAuthed(true);
+  };
+  useEffect(() => {
+    if (!sb) {
+      setAuthed(true);
+      return;
+    }
+    let sub;
+    (async () => {
+      const {
+        data
+      } = await sb.auth.getSession();
+      await handleSession(data ? data.session : null);
+      const res = sb.auth.onAuthStateChange((_e, session) => {
+        handleSession(session);
+      });
+      sub = res.data.subscription;
+    })();
+    return () => {
+      if (sub) sub.unsubscribe();
+    };
+  }, []);
+  const sendMagicLink = async email => {
+    if (!sb) return {
+      ok: false,
+      error: "Login isn't configured yet."
+    };
+    const {
+      error
+    } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
+    });
+    if (error) return {
+      ok: false,
+      error: error.message
+    };
+    return {
+      ok: true
+    };
+  };
+  const signOut = async () => {
+    if (sb) await sb.auth.signOut();
+  };
+  const savePf = async next => {
+    setPf(next);
+    pfRef.current = next;
+    if (sb && user) {
+      try {
+        await sb.from("portfolios").update({
+          cash: next.cash,
+          positions: next.positions,
+          updated_at: new Date().toISOString()
+        }).eq("player_id", user.id).eq("round", round);
+      } catch (e) {}
+    }
+  };
+  const logTrade = async (symbol, side, shares, p, action) => {
+    if (sb && user) {
+      try {
+        await sb.from("trades").insert({
+          player_id: user.id,
+          round,
+          symbol,
+          side,
+          shares,
+          price: p,
+          action
+        });
+      } catch (e) {}
+    }
+  };
+  const openPosition = async (symbol, side, shares) => {
+    const p = prices[symbol];
+    const notional = shares * p;
+    const next = Object.assign({}, pf, {
+      positions: (pf.positions || []).map(x => Object.assign({}, x))
+    });
+    if (side === "long") {
+      if (notional > next.cash) return flashToast("Not enough cash for that buy.", false);
+      next.cash -= notional;
+    } else {
+      const val = accountValue(pf, prices);
+      if (notional > val) return flashToast("Short too large for your account.", false);
+      next.cash += notional;
+    }
+    const ex = next.positions.find(x => x.symbol === symbol && x.side === side);
+    if (ex) {
+      const tot = ex.shares + shares;
+      ex.avgPrice = (ex.avgPrice * ex.shares + p * shares) / tot;
+      ex.shares = tot;
+    } else next.positions.push({
+      symbol,
+      side,
+      shares,
+      avgPrice: p
+    });
+    await savePf(next);
+    logTrade(symbol, side, shares, p, "open");
+    flashToast((side === "long" ? "Bought " : "Shorted ") + shares + " " + symbol + " @ " + price(p));
+    setTrade(null);
+  };
+  const closePosition = async pos => {
+    const p = prices[pos.symbol];
+    const next = Object.assign({}, pf, {
+      positions: (pf.positions || []).filter(x => x !== pos)
+    });
+    if (pos.side === "long") next.cash += pos.shares * p;else next.cash -= pos.shares * p;
+    await savePf(next);
+    logTrade(pos.symbol, pos.side, pos.shares, p, "close");
+    const pnl = pos.side === "long" ? (p - pos.avgPrice) * pos.shares : (pos.avgPrice - p) * pos.shares;
+    flashToast("Closed " + pos.symbol + " \u00b7 " + (pnl >= 0 ? "profit " : "loss ") + money(Math.abs(pnl)), pnl >= 0);
+  };
   const lookupTicker = async sym => {
     sym = (sym || "").toUpperCase().trim();
     if (!sym) return {
@@ -337,122 +484,62 @@ function App() {
       };
     }
   };
+  const loadBoard = useCallback(async () => {
+    if (!sb) return;
+    try {
+      const {
+        data
+      } = await sb.from("portfolios").select("player_id, cash, positions, players(name)").eq("round", round);
+      const rows = (data || []).map(r => {
+        const value = accountValue({
+          cash: Number(r.cash),
+          positions: r.positions || []
+        }, pricesRef.current);
+        return {
+          name: r.players && r.players.name || "player",
+          value: value,
+          ret: startCash ? (value - startCash) / startCash * 100 : 0,
+          mine: user && r.player_id === user.id
+        };
+      });
+      rows.sort((a, b) => b.value - a.value);
+      setBoard(rows);
+    } catch (e) {}
+  }, [round, startCash, user]);
   useEffect(() => {
-    if (!ready || !RELAY_URL) return;
-    let alive = true;
-    const base = RELAY_URL.replace(/\/$/, "");
-    const tick = async () => {
-      const held = pfRef.current.positions.map(p => p.symbol).filter(s => !UNIVERSE.some(u => u[0] === s));
-      const uniq = Array.from(new Set(held.concat(lookups)));
-      const now = Date.now();
-      for (const s of uniq) {
-        if (now - (customRefRef.current[s] || 0) < 10000) continue;
-        customRefRef.current[s] = now;
-        try {
-          const r = await fetch(base + "/api/quote?symbol=" + encodeURIComponent(s));
-          const d = await r.json();
-          if (alive && d && d.price != null) {
-            setPrices(prev => Object.assign({}, prev, {
-              [s]: d.price
-            }));
-            if (d.open != null) setOpens(prev => Object.assign({}, prev, {
-              [s]: d.open
-            }));
-          }
-        } catch (e) {}
-      }
-    };
-    const id = setInterval(tick, 3000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, [ready, lookups]);
-  const flashToast = (msg, ok = true) => {
-    setToast({
-      msg,
-      ok
-    });
-    setTimeout(() => setToast(null), 2600);
-  };
-  const join = async name => {
-    const m = {
-      uid: uid(),
-      name: name.trim()
-    };
-    const fresh = {
-      cash: START_CASH,
-      positions: []
-    };
-    setMe(m);
-    setPf(fresh);
-    meRef.current = m;
-    pfRef.current = fresh;
-    await sSet("me_v1", m);
-    await sSet("pf_v1", fresh);
-    await pushBoard();
-  };
-  const savePf = async next => {
-    setPf(next);
-    pfRef.current = next;
-    await sSet("pf_v1", next);
-    await pushBoard();
-  };
-  const openPosition = async (symbol, side, shares) => {
-    const p = prices[symbol];
-    const notional = shares * p;
-    const next = Object.assign({}, pf, {
-      positions: pf.positions.map(x => Object.assign({}, x))
-    });
-    if (side === "long") {
-      if (notional > next.cash) return flashToast("Not enough cash for that buy.", false);
-      next.cash -= notional;
-    } else {
-      const val = accountValue(pf, prices);
-      if (notional > val) return flashToast("Short too large for your account.", false);
-      next.cash += notional;
-    }
-    const ex = next.positions.find(x => x.symbol === symbol && x.side === side);
-    if (ex) {
-      const tot = ex.shares + shares;
-      ex.avgPrice = (ex.avgPrice * ex.shares + p * shares) / tot;
-      ex.shares = tot;
-    } else next.positions.push({
-      symbol,
-      side,
-      shares,
-      avgPrice: p
-    });
-    await savePf(next);
-    flashToast((side === "long" ? "Bought " : "Shorted ") + shares + " " + symbol + " @ " + price(p));
-    setTrade(null);
-  };
-  const closePosition = async pos => {
-    const p = prices[pos.symbol];
-    const next = Object.assign({}, pf, {
-      positions: pf.positions.filter(x => x !== pos)
-    });
-    if (pos.side === "long") next.cash += pos.shares * p;else next.cash -= pos.shares * p;
-    await savePf(next);
-    const pnl = pos.side === "long" ? (p - pos.avgPrice) * pos.shares : (pos.avgPrice - p) * pos.shares;
-    flashToast("Closed " + pos.symbol + " · " + (pnl >= 0 ? "profit " : "loss ") + money(Math.abs(pnl)), pnl >= 0);
-  };
-  if (!ready) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+    if (view !== "leaderboard" || !user) return;
+    loadBoard();
+    const id = setInterval(loadBoard, 8000);
+    return () => clearInterval(id);
+  }, [view, user, loadBoard]);
+
+  /* ---- render ---- */
+  if (!sb) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(ConfigNote, null));
+  if (!authed) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
     style: {
       color: T.muted,
       padding: 40
     }
-  }, "Loading the floor…"));
-  if (!me) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Join, {
-    onJoin: join
+  }, "Loading the floor\\u2026"));
+  if (!user) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Login, {
+    onSend: sendMagicLink
   }));
   const val = accountValue(pf, prices);
-  const ret = (val - START_CASH) / START_CASH * 100;
-  return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(TopBar, {
+  const ret = startCash ? (val - startCash) / startCash * 100 : 0;
+  return /*#__PURE__*/React.createElement(Shell, null, banner && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(240,82,62,.14)",
+      color: T.down,
+      textAlign: "center",
+      padding: "8px",
+      fontSize: 13
+    }
+  }, banner), /*#__PURE__*/React.createElement(TopBar, {
     me: me,
     val: val,
     ret: ret,
-    feed: feed
+    feed: feed,
+    onSignOut: signOut
   }), /*#__PURE__*/React.createElement(Nav, {
     view: view,
     setView: setView
@@ -474,11 +561,11 @@ function App() {
     prices: prices,
     val: val,
     ret: ret,
+    startCash: startCash,
     onClose: closePosition,
     setView: setView
   }), view === "leaderboard" && /*#__PURE__*/React.createElement(Leaderboard, {
     board: board,
-    me: me,
     onRefresh: loadBoard
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
@@ -504,11 +591,178 @@ function Shell({
     }
   }, children);
 }
+function ConfigNote() {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 460,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 22,
+      letterSpacing: "0.02em",
+      marginBottom: 10
+    }
+  }, "THE FLOOR"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      lineHeight: 1.6,
+      fontSize: 14
+    }
+  }, "Almost there. Paste your Supabase ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, "anon public"), " key into the ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, "SUPABASE_ANON_KEY"), " line near the top of index.html, then redeploy.")));
+}
+function Login({
+  onSend
+}) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = async () => {
+    if (!email.trim() || busy) return;
+    setBusy(true);
+    setErr("");
+    const res = await onSend(email.trim());
+    setBusy(false);
+    if (res.ok) setSent(true);else setErr(res.error || "Could not send link");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 400
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 26
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 9,
+      background: T.gold,
+      display: "grid",
+      placeItems: "center",
+      color: "#12140f",
+      fontWeight: 700,
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: 20
+    }
+  }, "\\u25b2"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 22,
+      letterSpacing: "0.02em"
+    }
+  }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      letterSpacing: "0.14em"
+    }
+  }, "SCHOOL STOCK CLUB"))), sent ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 24,
+      fontWeight: 600,
+      margin: "0 0 10px"
+    }
+  }, "Check your email"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      lineHeight: 1.6,
+      fontSize: 14
+    }
+  }, "We sent a login link to ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, email), ". Click it on this device to enter the floor."), /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    style: {
+      marginTop: 16
+    },
+    onClick: () => setSent(false)
+  }, "Use a different email")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 26,
+      fontWeight: 600,
+      margin: "0 0 8px"
+    }
+  }, "Sign in"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      margin: "0 0 22px",
+      lineHeight: 1.5,
+      fontSize: 14
+    }
+  }, "Enter your email and we'll send you a one-tap login link. No password needed."), /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.06em"
+    }
+  }, "EMAIL"), /*#__PURE__*/React.createElement("input", {
+    value: email,
+    onChange: e => {
+      setEmail(e.target.value);
+      setErr("");
+    },
+    placeholder: "you@school.edu",
+    type: "email",
+    onKeyDown: e => e.key === "Enter" && submit(),
+    style: inputStyle
+  }), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.down,
+      fontSize: 13,
+      marginTop: 8
+    }
+  }, err), /*#__PURE__*/React.createElement("button", {
+    disabled: !email.trim() || busy,
+    onClick: submit,
+    className: "primary",
+    style: {
+      marginTop: 16,
+      width: "100%",
+      opacity: !email.trim() || busy ? 0.4 : 1
+    }
+  }, busy ? "Sending\u2026" : "Email me a login link"))));
+}
 function TopBar({
   me,
   val,
   ret,
-  feed
+  feed,
+  onSignOut
 }) {
   const good = ret >= 0;
   const status = feed === "live" ? {
@@ -521,6 +775,7 @@ function TopBar({
     dot: T.faint,
     label: "SIMULATED"
   };
+  const initial = (me && me.name ? me.name : "?").slice(0, 1).toUpperCase();
   return /*#__PURE__*/React.createElement("div", {
     style: {
       borderBottom: "1px solid " + T.line,
@@ -558,7 +813,7 @@ function TopBar({
       fontWeight: 700,
       fontFamily: "'JetBrains Mono', monospace"
     }
-  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "\\u25b2"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       letterSpacing: "0.02em",
@@ -589,7 +844,7 @@ function TopBar({
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 22
+      gap: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -625,7 +880,10 @@ function TopBar({
       color: good ? T.up : T.down
     }
   }, pct(ret))), /*#__PURE__*/React.createElement("div", {
+    title: "Sign out",
+    onClick: onSignOut,
     style: {
+      cursor: "pointer",
       width: 34,
       height: 34,
       borderRadius: "50%",
@@ -635,7 +893,7 @@ function TopBar({
       placeItems: "center",
       fontWeight: 600
     }
-  }, me.name.slice(0, 1).toUpperCase()))));
+  }, initial))));
 }
 function Nav({
   view,
@@ -656,7 +914,8 @@ function Nav({
       margin: "0 auto",
       padding: "0 12px",
       display: "flex",
-      gap: 4
+      gap: 4,
+      overflowX: "auto"
     }
   }, tabs.map(([k, label]) => /*#__PURE__*/React.createElement("button", {
     key: k,
@@ -664,98 +923,10 @@ function Nav({
     className: "tab",
     style: {
       color: view === k ? T.text : T.muted,
-      borderBottom: "2px solid " + (view === k ? T.gold : "transparent")
+      borderBottom: "2px solid " + (view === k ? T.gold : "transparent"),
+      whiteSpace: "nowrap"
     }
   }, label))));
-}
-function Join({
-  onJoin
-}) {
-  const [name, setName] = useState("");
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: "100vh",
-      display: "grid",
-      placeItems: "center",
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: "100%",
-      maxWidth: 400
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      marginBottom: 26
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 9,
-      background: T.gold,
-      display: "grid",
-      placeItems: "center",
-      color: "#12140f",
-      fontWeight: 700,
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: 20
-    }
-  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 22,
-      letterSpacing: "0.02em"
-    }
-  }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: T.faint,
-      letterSpacing: "0.14em"
-    }
-  }, "SCHOOL STOCK CLUB"))), /*#__PURE__*/React.createElement("h1", {
-    style: {
-      fontSize: 26,
-      fontWeight: 600,
-      margin: "0 0 8px"
-    }
-  }, "Join the club"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: T.muted,
-      margin: "0 0 22px",
-      lineHeight: 1.5,
-      fontSize: 14
-    }
-  }, "Pick a name for your account. You start with ", /*#__PURE__*/React.createElement("span", {
-    className: "mono",
-    style: {
-      color: T.text
-    }
-  }, money(START_CASH)), " in simulated cash. No real money, all bragging rights."), /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 12,
-      color: T.muted,
-      letterSpacing: "0.06em"
-    }
-  }, "DISPLAY NAME"), /*#__PURE__*/React.createElement("input", {
-    value: name,
-    onChange: e => setName(e.target.value),
-    placeholder: "e.g. Lea R.",
-    onKeyDown: e => e.key === "Enter" && name.trim() && onJoin(name),
-    style: inputStyle
-  }), /*#__PURE__*/React.createElement("button", {
-    disabled: !name.trim(),
-    onClick: () => name.trim() && onJoin(name),
-    className: "primary",
-    style: {
-      marginTop: 16,
-      width: "100%",
-      opacity: name.trim() ? 1 : 0.4
-    }
-  }, "Enter the floor")));
 }
 function Market({
   prices,
@@ -917,11 +1088,12 @@ function Portfolio({
   prices,
   val,
   ret,
+  startCash,
   onClose,
   setView
 }) {
   const good = ret >= 0;
-  const totalPnl = val - START_CASH;
+  const totalPnl = val - startCash;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       paddingTop: 20
@@ -944,7 +1116,7 @@ function Portfolio({
     color: good ? T.up : T.down
   })), /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Positions"), pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Positions"), !pf.positions || pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: empty
   }, "Nothing open yet. Head to the ", /*#__PURE__*/React.createElement("button", {
     className: "link",
@@ -1045,7 +1217,6 @@ function Stat({
 }
 function Leaderboard({
   board,
-  me,
   onRefresh
 }) {
   return /*#__PURE__*/React.createElement("div", {
@@ -1068,59 +1239,56 @@ function Leaderboard({
     onClick: onRefresh
   }, "Refresh")), board.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: empty
-  }, "Make a trade to appear here.") : /*#__PURE__*/React.createElement("div", {
+  }, "No traders yet. Make a trade to appear here.") : /*#__PURE__*/React.createElement("div", {
     style: {
       border: "1px solid " + T.line,
       borderRadius: 12,
       overflow: "hidden"
     }
-  }, board.map((r, i) => {
-    const mine = r.name === me.name;
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      className: "lb-row",
-      style: {
-        background: mine ? "rgba(230,169,60,.08)" : "transparent"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "mono",
-      style: {
-        width: 34,
-        color: i < 3 ? T.gold : T.faint,
-        fontWeight: 700
-      }
-    }, i + 1), /*#__PURE__*/React.createElement("span", {
-      style: {
-        flex: 1,
-        fontWeight: mine ? 600 : 500
-      }
-    }, r.name, mine && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: T.gold,
-        fontSize: 11,
-        marginLeft: 8
-      }
-    }, "YOU")), /*#__PURE__*/React.createElement("span", {
-      className: "mono",
-      style: {
-        marginRight: 20
-      }
-    }, money(r.value)), /*#__PURE__*/React.createElement("span", {
-      className: "mono",
-      style: {
-        width: 88,
-        textAlign: "right",
-        color: r.ret >= 0 ? T.up : T.down
-      }
-    }, pct(r.ret)));
-  })), /*#__PURE__*/React.createElement("p", {
+  }, board.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "lb-row",
+    style: {
+      background: r.mine ? "rgba(230,169,60,.08)" : "transparent"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      width: 34,
+      color: i < 3 ? T.gold : T.faint,
+      fontWeight: 700
+    }
+  }, i + 1), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      fontWeight: r.mine ? 600 : 500
+    }
+  }, r.name, r.mine && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.gold,
+      fontSize: 11,
+      marginLeft: 8
+    }
+  }, "YOU")), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      marginRight: 20
+    }
+  }, money(r.value)), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      width: 88,
+      textAlign: "right",
+      color: r.ret >= 0 ? T.up : T.down
+    }
+  }, pct(r.ret))))), /*#__PURE__*/React.createElement("p", {
     style: {
       color: T.faint,
       fontSize: 12,
       marginTop: 14,
       lineHeight: 1.5
     }
-  }, "Shared standings across the whole club arrive with the accounts step. For now this shows scores saved on this device."));
+  }, "Live standings across the whole club, updating every few seconds."));
 }
 function News({
   news,
@@ -1205,7 +1373,7 @@ function NewsItem({
       fontSize: 11,
       color: T.faint
     }
-  }, "· ", ago(n.datetime))), /*#__PURE__*/React.createElement("div", {
+  }, "\\u00b7 ", ago(n.datetime))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 15,
@@ -1233,7 +1401,7 @@ function Learn() {
   }, "Finance dictionary"), /*#__PURE__*/React.createElement("input", {
     value: q,
     onChange: e => setQ(e.target.value),
-    placeholder: "Search a term…",
+    placeholder: "Search a term\\u2026",
     style: Object.assign({}, inputStyle, {
       marginTop: 0,
       marginBottom: 18
@@ -1321,7 +1489,7 @@ function TradeModal({
   }, name)), /*#__PURE__*/React.createElement("button", {
     className: "x",
     onClick: onClose
-  }, "×")), /*#__PURE__*/React.createElement("div", {
+  }, "\\u00d7")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -1405,7 +1573,7 @@ function Toast({
       color: toast.ok ? T.up : T.down,
       marginRight: 8
     }
-  }, toast.ok ? "✓" : "✕"), toast.msg);
+  }, toast.ok ? "\u2713" : "\u2715"), toast.msg);
 }
 const inputStyle = {
   width: "100%",
