@@ -168,11 +168,13 @@ function App() {
   const [trade, setTrade] = useState(null);
   const [board, setBoard] = useState([]);
   const [news, setNews] = useState(SAMPLE_NEWS);
+  const [lookups, setLookups] = useState([]);
   const [toast, setToast] = useState(null);
   const pfRef = useRef(pf),
     pricesRef = useRef(prices),
     meRef = useRef(me),
     firstLive = useRef(true);
+  const customRefRef = useRef({});
   pfRef.current = pf;
   pricesRef.current = prices;
   meRef.current = me;
@@ -294,6 +296,78 @@ function App() {
       clearInterval(id);
     };
   }, [ready]);
+  const lookupTicker = async sym => {
+    sym = (sym || "").toUpperCase().trim();
+    if (!sym) return {
+      ok: false,
+      error: "Enter a ticker"
+    };
+    if (UNIVERSE.some(u => u[0] === sym)) return {
+      ok: true
+    };
+    if (!RELAY_URL) return {
+      ok: false,
+      error: "Live lookup needs the relay"
+    };
+    try {
+      const r = await fetch(RELAY_URL.replace(/\/$/, "") + "/api/quote?symbol=" + encodeURIComponent(sym));
+      if (!r.ok) return {
+        ok: false,
+        error: "No live quote for " + sym
+      };
+      const d = await r.json();
+      if (!d || d.price == null) return {
+        ok: false,
+        error: "No live quote for " + sym
+      };
+      setPrices(prev => Object.assign({}, prev, {
+        [sym]: d.price
+      }));
+      setOpens(prev => Object.assign({}, prev, {
+        [sym]: d.open != null ? d.open : d.price
+      }));
+      setLookups(prev => prev.indexOf(sym) === -1 ? prev.concat([sym]) : prev);
+      return {
+        ok: true
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: "Lookup failed"
+      };
+    }
+  };
+  useEffect(() => {
+    if (!ready || !RELAY_URL) return;
+    let alive = true;
+    const base = RELAY_URL.replace(/\/$/, "");
+    const tick = async () => {
+      const held = pfRef.current.positions.map(p => p.symbol).filter(s => !UNIVERSE.some(u => u[0] === s));
+      const uniq = Array.from(new Set(held.concat(lookups)));
+      const now = Date.now();
+      for (const s of uniq) {
+        if (now - (customRefRef.current[s] || 0) < 10000) continue;
+        customRefRef.current[s] = now;
+        try {
+          const r = await fetch(base + "/api/quote?symbol=" + encodeURIComponent(s));
+          const d = await r.json();
+          if (alive && d && d.price != null) {
+            setPrices(prev => Object.assign({}, prev, {
+              [s]: d.price
+            }));
+            if (d.open != null) setOpens(prev => Object.assign({}, prev, {
+              [s]: d.open
+            }));
+          }
+        } catch (e) {}
+      }
+    };
+    const id = setInterval(tick, 3000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [ready, lookups]);
   const flashToast = (msg, ok = true) => {
     setToast({
       msg,
@@ -392,7 +466,9 @@ function App() {
     prices: prices,
     opens: opens,
     flash: flash,
-    onTrade: setTrade
+    onTrade: setTrade,
+    onLookup: lookupTicker,
+    lookups: lookups
   }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
     pf: pf,
     prices: prices,
@@ -685,40 +761,29 @@ function Market({
   prices,
   opens,
   flash,
-  onTrade
+  onTrade,
+  onLookup,
+  lookups
 }) {
   const [q, setQ] = useState("");
+  const [looking, setLooking] = useState(false);
+  const [lookErr, setLookErr] = useState("");
+  const qU = q.trim().toUpperCase();
   const rows = UNIVERSE.filter(([s, n]) => (s + n).toLowerCase().indexOf(q.toLowerCase()) !== -1);
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      paddingTop: 20
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    value: q,
-    onChange: e => setQ(e.target.value),
-    placeholder: "Search ticker or company…",
-    style: Object.assign({}, inputStyle, {
-      marginTop: 0,
-      marginBottom: 16
-    })
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid " + T.line,
-      borderRadius: 12,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "mkt-head"
-  }, /*#__PURE__*/React.createElement("span", null, "Symbol"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "Price"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "Today"), /*#__PURE__*/React.createElement("span", {
-    className: "r act"
-  }, "Trade")), rows.map(([s, n]) => {
+  const inUniverse = UNIVERSE.some(([s]) => s === qU);
+  const matchLookups = qU ? lookups.filter(s => s.indexOf(qU) === 0) : [];
+  const canLookup = qU.length >= 1 && qU.length <= 6 && /^[A-Z.]+$/.test(qU) && !inUniverse && lookups.indexOf(qU) === -1;
+  const doLookup = async () => {
+    setLooking(true);
+    setLookErr("");
+    const res = await onLookup(qU);
+    setLooking(false);
+    if (!res.ok) setLookErr(res.error || "No live quote for " + qU);
+  };
+  const renderRow = (s, n) => {
     const p = prices[s],
       o = opens[s],
-      ch = (p - o) / o * 100,
+      ch = o ? (p - o) / o * 100 : 0,
       f = flash[s];
     return /*#__PURE__*/React.createElement("div", {
       key: s,
@@ -741,7 +806,7 @@ function Market({
         borderRadius: 5,
         transition: "background .3s"
       }
-    }, price(p)), /*#__PURE__*/React.createElement("span", {
+    }, p != null ? price(p) : "\u2014"), /*#__PURE__*/React.createElement("span", {
       className: "r mono",
       style: {
         color: ch >= 0 ? T.up : T.down
@@ -766,7 +831,86 @@ function Market({
         side: "short"
       })
     }, "Short")));
-  })));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: q,
+    onChange: e => {
+      setQ(e.target.value);
+      setLookErr("");
+    },
+    placeholder: "Search any ticker (e.g. AAPL, COST, SHOP)\\u2026",
+    style: Object.assign({}, inputStyle, {
+      marginTop: 0,
+      marginBottom: 16
+    })
+  }), qU && (matchLookups.length > 0 || canLookup || lookErr) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      overflow: "hidden",
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mkt-head"
+  }, /*#__PURE__*/React.createElement("span", null, "Search result"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Price"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Today"), /*#__PURE__*/React.createElement("span", {
+    className: "r act"
+  }, "Trade")), matchLookups.map(s => renderRow(s, "live lookup")), canLookup && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 16px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted,
+      fontSize: 14
+    }
+  }, "Not in the live list. Pull a live quote for ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, qU), "?"), /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    disabled: looking,
+    onClick: doLookup
+  }, looking ? "Looking\u2026" : "Look up " + qU)), lookErr && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 16px",
+      color: T.down,
+      fontSize: 13
+    }
+  }, lookErr)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + T.line,
+      borderRadius: 12,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mkt-head"
+  }, /*#__PURE__*/React.createElement("span", null, "Symbol"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Price"), /*#__PURE__*/React.createElement("span", {
+    className: "r"
+  }, "Today"), /*#__PURE__*/React.createElement("span", {
+    className: "r act"
+  }, "Trade")), rows.map(([s, n]) => renderRow(s, n)), rows.length === 0 && matchLookups.length === 0 && !canLookup && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "20px 16px",
+      color: T.muted,
+      fontSize: 14
+    }
+  }, "No matches.")));
 }
 function Portfolio({
   pf,
