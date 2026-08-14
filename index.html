@@ -72,6 +72,51 @@ input:focus { border-color: #F5B73D !important; }
 .mvk { font-size: 10px; letter-spacing: .1em; color: #8B94A3; }
 .mvi { font-size: 12px; }
 @media (max-width: 520px) { .movers { grid-template-columns: 1fr; } }
+
+/* ===== GLASS THEME (glassy-gold) ===== */
+body { background:
+  radial-gradient(900px 520px at 16% -8%, rgba(245,183,61,0.11), transparent 55%),
+  radial-gradient(1000px 720px at 102% 6%, rgba(129,101,255,0.12), transparent 55%),
+  radial-gradient(900px 700px at 50% 118%, rgba(70,120,255,0.07), transparent 60%),
+  #080A0F; }
+.mkt-head, .pos-head { background: rgba(20,26,36,0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.mkt-row { border-top: 1px solid rgba(255,255,255,0.055); }
+.mkt-row:hover { background: rgba(255,255,255,0.035); }
+.pos-row, .lb-row { border-top: 1px solid rgba(255,255,255,0.055); }
+.idx { background: linear-gradient(160deg, rgba(32,40,56,0.55), rgba(16,20,28,0.5)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.09); box-shadow: 0 10px 32px rgba(0,0,0,0.34); }
+.mv { background: rgba(20,26,36,0.46); backdrop-filter: blur(11px); -webkit-backdrop-filter: blur(11px); border: 1px solid rgba(255,255,255,0.08); }
+.news-item { background: rgba(20,26,36,0.46); backdrop-filter: blur(11px); -webkit-backdrop-filter: blur(11px); border: 1px solid rgba(255,255,255,0.08); }
+a.news-item:hover { border-color: rgba(245,183,61,0.4); }
+.modal { background: rgba(15,19,27,0.82); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); border: 1px solid rgba(255,255,255,0.11); box-shadow: 0 24px 70px rgba(0,0,0,0.55); }
+.overlay { background: rgba(6,8,11,0.5); }
+.toast { background: rgba(20,26,36,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); }
+.ghost:hover { background: rgba(255,255,255,0.09); }
+.mini { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); }
+.primary { box-shadow: 0 8px 28px rgba(245,183,61,0.30); }
+.tab { transition: color .15s ease; }
+input:focus { border-color: rgba(245,183,61,0.6) !important; box-shadow: 0 0 0 3px rgba(245,183,61,0.12); }
+
+/* ===== LAYOUT (sidebar + bottom bar) ===== */
+.app-shell { display: flex; min-height: 100vh; align-items: flex-start; }
+.sidebar { width: 228px; flex-shrink: 0; position: sticky; top: 0; height: 100vh; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; background: rgba(9,11,16,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-right: 1px solid rgba(255,255,255,0.07); }
+.main { flex: 1; min-width: 0; }
+.content { max-width: 1040px; margin: 0 auto; padding: 0 18px 96px; }
+.navitem { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-radius: 11px; color: #8B94A3; cursor: pointer; font-weight: 500; font-size: 15px; -webkit-user-select: none; user-select: none; transition: background .12s, color .12s; }
+.navitem:hover { background: rgba(255,255,255,0.05); color: #ECE7DB; }
+.navitem.active { background: rgba(245,183,61,0.14); color: #F5B73D; }
+.hero { background: linear-gradient(150deg, rgba(245,183,61,0.12), rgba(20,26,36,0.5) 55%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(245,183,61,0.20); border-radius: 18px; padding: 22px; margin-bottom: 14px; box-shadow: 0 18px 48px rgba(0,0,0,0.42); }
+.topbar-inner { justify-content: flex-end; }
+.topbar-brand { display: none; }
+.bottombar { display: none; }
+.btab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; background: none; border: none; color: #8B94A3; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; cursor: pointer; font-family: inherit; }
+.btab.active { color: #F5B73D; }
+@media (max-width: 820px) {
+  .sidebar { display: none; }
+  .topbar-brand { display: flex !important; }
+  .topbar-inner { justify-content: space-between; }
+  .bottombar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(9,11,16,0.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid rgba(255,255,255,0.08); padding: 6px 4px calc(8px + env(safe-area-inset-bottom)); justify-content: space-around; }
+}
 </style>
 </head>
 <body>
@@ -109,10 +154,10 @@ const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_UR
 }) : null;
 const DEFAULT_CASH = 100000;
 const T = {
-  bg: "#0A0D13",
-  panel: "#12161D",
-  panel2: "#1A1F28",
-  line: "#232B37",
+  bg: "#090B10",
+  panel: "rgba(22,28,39,0.58)",
+  panel2: "rgba(30,37,50,0.55)",
+  line: "rgba(255,255,255,0.09)",
   text: "#ECE7DB",
   muted: "#8B94A3",
   faint: "#5B6470",
@@ -200,7 +245,7 @@ function App() {
   const [prices, setPrices] = useState({});
   const [opens, setOpens] = useState({});
   const [flash, setFlash] = useState({});
-  const [view, setView] = useState("market");
+  const [view, setView] = useState("portfolio");
   const [showWelcome, setShowWelcome] = useState(false);
   const [feed, setFeed] = useState(RELAY_URL ? "connecting" : "sim");
   const [trade, setTrade] = useState(null);
@@ -671,22 +716,24 @@ function App() {
       padding: "8px",
       fontSize: 13
     }
-  }, banner), /*#__PURE__*/React.createElement(TopBar, {
+  }, banner), /*#__PURE__*/React.createElement("div", {
+    className: "app-shell"
+  }, /*#__PURE__*/React.createElement(Sidebar, {
+    view: view,
+    setView: setView,
+    isAdmin: me && me.is_admin,
+    me: me,
+    onSignOut: signOut
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "main"
+  }, /*#__PURE__*/React.createElement(TopBar, {
     me: me,
     val: val,
     ret: ret,
     feed: feed,
     onSignOut: signOut
-  }), /*#__PURE__*/React.createElement(Nav, {
-    view: view,
-    setView: setView,
-    isAdmin: me && me.is_admin
   }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: 1040,
-      margin: "0 auto",
-      padding: "0 18px 60px"
-    }
+    className: "content"
   }, view === "market" && /*#__PURE__*/React.createElement(Market, {
     prices: prices,
     opens: opens,
@@ -700,6 +747,7 @@ function App() {
   }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
     pf: pf,
     prices: prices,
+    opens: opens,
     val: val,
     ret: ret,
     startCash: startCash,
@@ -726,7 +774,11 @@ function App() {
     onRemovePlayer: removePlayer,
     onReloadPlayers: loadAdminPlayers,
     meId: user.id
-  })), trade && /*#__PURE__*/React.createElement(TradeModal, {
+  })))), /*#__PURE__*/React.createElement(BottomBar, {
+    view: view,
+    setView: setView,
+    isAdmin: me && me.is_admin
+  }), trade && /*#__PURE__*/React.createElement(TradeModal, {
     trade: trade,
     prices: prices,
     pf: pf,
@@ -742,7 +794,7 @@ function Shell({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
-      background: T.bg,
+      background: "transparent",
       color: T.text
     }
   }, children);
@@ -1011,23 +1063,26 @@ function TopBar({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       borderBottom: "1px solid " + T.line,
-      background: T.bg,
+      background: "rgba(9,11,16,0.72)",
+      backdropFilter: "blur(14px)",
+      WebkitBackdropFilter: "blur(14px)",
       position: "sticky",
       top: 0,
       zIndex: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
+    className: "topbar-inner",
     style: {
       maxWidth: 1040,
       margin: "0 auto",
       padding: "16px 18px",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
       gap: 12,
       flexWrap: "wrap"
     }
   }, /*#__PURE__*/React.createElement("div", {
+    className: "topbar-brand",
     style: {
       display: "flex",
       alignItems: "center",
@@ -1128,40 +1183,178 @@ function TopBar({
     }
   }, initial))));
 }
-function Nav({
+function Icon({
+  name,
+  size = 20
+}) {
+  const s = {
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  };
+  const paths = {
+    portfolio: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
+      x: "3",
+      y: "7",
+      width: "18",
+      height: "13",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    })),
+    market: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: "M3 17l5-5 3 3 7-8"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M21 7v4h-4"
+    })),
+    leaderboard: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
+      x: "4",
+      y: "12",
+      width: "4",
+      height: "7",
+      rx: "1"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "10",
+      y: "8",
+      width: "4",
+      height: "11",
+      rx: "1"
+    }), /*#__PURE__*/React.createElement("rect", {
+      x: "16",
+      y: "4",
+      width: "4",
+      height: "15",
+      rx: "1"
+    })),
+    news: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
+      x: "4",
+      y: "4",
+      width: "16",
+      height: "16",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M8 9h8M8 13h8M8 17h5"
+    })),
+    learn: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: "M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M4 19a2 2 0 0 1 2-2h13"
+    })),
+    admin: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: "M4 7h16M4 12h16M4 17h16"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "9",
+      cy: "7",
+      r: "2"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "15",
+      cy: "12",
+      r: "2"
+    }), /*#__PURE__*/React.createElement("circle", {
+      cx: "8",
+      cy: "17",
+      r: "2"
+    }))
+  };
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    style: s
+  }, paths[name]);
+}
+function Sidebar({
+  view,
+  setView,
+  isAdmin,
+  me,
+  onSignOut
+}) {
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["news", "News"], ["learn", "Learn"]];
+  if (isAdmin) items.push(["admin", "Admin"]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "sidebar"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "2px 8px 20px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: 9,
+      background: T.gold,
+      display: "grid",
+      placeItems: "center",
+      color: "#12140f",
+      fontWeight: 700,
+      fontFamily: "'JetBrains Mono', monospace"
+    }
+  }, "▲"), /*#__PURE__*/React.createElement("div", {
+    className: "wordmark",
+    style: {
+      fontWeight: 700,
+      letterSpacing: "0.02em",
+      fontSize: 17
+    }
+  }, "THE FLOOR")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 4,
+      flex: 1
+    }
+  }, items.map(([k, label]) => /*#__PURE__*/React.createElement("div", {
+    key: k,
+    className: "navitem" + (view === k ? " active" : ""),
+    onClick: () => setView(k)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: k
+  }), /*#__PURE__*/React.createElement("span", null, label)))), /*#__PURE__*/React.createElement("div", {
+    className: "navitem",
+    onClick: onSignOut,
+    style: {
+      color: T.faint
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    style: {
+      width: 20,
+      height: 20,
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 1.7,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M16 17l5-5-5-5M21 12H9"
+  })), /*#__PURE__*/React.createElement("span", null, "Sign out")));
+}
+function BottomBar({
   view,
   setView,
   isAdmin
 }) {
-  const tabs = [["market", "Market"], ["portfolio", "Portfolio"], ["leaderboard", "Leaderboard"], ["news", "News"], ["learn", "Learn"]];
-  if (isAdmin) tabs.push(["admin", "Admin"]);
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["news", "News"], ["learn", "Learn"]];
+  if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderBottom: "1px solid " + T.line,
-      background: T.bg,
-      position: "sticky",
-      top: 64,
-      zIndex: 19
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: 1040,
-      margin: "0 auto",
-      padding: "0 12px",
-      display: "flex",
-      gap: 4,
-      overflowX: "auto"
-    }
-  }, tabs.map(([k, label]) => /*#__PURE__*/React.createElement("button", {
+    className: "bottombar"
+  }, items.map(([k, label]) => /*#__PURE__*/React.createElement("button", {
     key: k,
-    onClick: () => setView(k),
-    className: "tab",
-    style: {
-      color: view === k ? T.text : T.muted,
-      borderBottom: "2px solid " + (view === k ? T.gold : "transparent"),
-      whiteSpace: "nowrap"
-    }
-  }, label))));
+    className: "btab" + (view === k ? " active" : ""),
+    onClick: () => setView(k)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: k === "leaderboard" ? "leaderboard" : k,
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", null, label))));
 }
 function Movers({
   prices,
@@ -1376,8 +1569,12 @@ function Market({
   }), qU && (matchLookups.length > 0 || canLookup || lookErr) && /*#__PURE__*/React.createElement("div", {
     style: {
       border: "1px solid " + T.line,
-      borderRadius: 12,
+      borderRadius: 14,
       overflow: "hidden",
+      background: "rgba(18,23,32,0.42)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.3)",
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1419,8 +1616,12 @@ function Market({
   }, lookErr)), /*#__PURE__*/React.createElement("div", {
     style: {
       border: "1px solid " + T.line,
-      borderRadius: 12,
-      overflow: "hidden"
+      borderRadius: 14,
+      overflow: "hidden",
+      background: "rgba(18,23,32,0.42)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "mkt-head"
@@ -1441,6 +1642,7 @@ function Market({
 function Portfolio({
   pf,
   prices,
+  opens,
   val,
   ret,
   startCash,
@@ -1449,18 +1651,60 @@ function Portfolio({
 }) {
   const good = ret >= 0;
   const totalPnl = val - startCash;
+  const positions = pf.positions || [];
+  let dayPnl = 0,
+    invested = 0,
+    upC = 0,
+    downC = 0;
+  for (const pos of positions) {
+    const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
+    const op = opens && opens[pos.symbol] != null ? opens[pos.symbol] : cur;
+    const d = pos.side === "long" ? pos.shares * (cur - op) : pos.shares * (op - cur);
+    dayPnl += d;
+    if (d > 0) upC++;else if (d < 0) downC++;
+    if (pos.side === "long") invested += pos.shares * cur;
+  }
+  const openVal = val - dayPnl;
+  const dayPct = openVal ? dayPnl / openVal * 100 : 0;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       paddingTop: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
+    className: "hero"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.1em"
+    }
+  }, "PORTFOLIO VALUE"), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 40,
+      fontWeight: 700,
+      marginTop: 8,
+      lineHeight: 1
+    }
+  }, money(val)), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      marginTop: 10,
+      color: dayPnl >= 0 ? T.up : T.down,
+      fontSize: 15
+    }
+  }, (dayPnl >= 0 ? "\u25b2 " : "\u25bc ") + money(Math.abs(dayPnl)), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      opacity: 0.85
+    }
+  }, "(", pct(dayPct), ") today"))), /*#__PURE__*/React.createElement("div", {
     className: "cards"
   }, /*#__PURE__*/React.createElement(Stat, {
-    label: "ACCOUNT VALUE",
-    value: money(val)
-  }), /*#__PURE__*/React.createElement(Stat, {
     label: "CASH",
     value: money(pf.cash)
+  }), /*#__PURE__*/React.createElement(Stat, {
+    label: "INVESTED",
+    value: money(invested)
   }), /*#__PURE__*/React.createElement(Stat, {
     label: "TOTAL P&L",
     value: money(totalPnl),
@@ -1469,12 +1713,30 @@ function Portfolio({
     label: "RETURN",
     value: pct(ret),
     color: good ? T.up : T.down
-  })), /*#__PURE__*/React.createElement(Allocation, {
+  })), positions.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 18,
+      marginTop: 14,
+      fontSize: 13,
+      color: T.muted
+    }
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.up,
+      fontWeight: 600
+    }
+  }, upC), " up today"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.down,
+      fontWeight: 600
+    }
+  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(Allocation, {
     pf: pf,
     prices: prices
   }), /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Positions"), !pf.positions || pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Holdings"), !pf.positions || pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: empty
   }, "Nothing open yet. Head to the ", /*#__PURE__*/React.createElement("button", {
     className: "link",
@@ -1482,8 +1744,12 @@ function Portfolio({
   }, "Market"), " and place your first trade.") : /*#__PURE__*/React.createElement("div", {
     style: {
       border: "1px solid " + T.line,
-      borderRadius: 12,
-      overflow: "hidden"
+      borderRadius: 14,
+      overflow: "hidden",
+      background: "rgba(18,23,32,0.42)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "pos-head"
@@ -1552,10 +1818,13 @@ function Stat({
 }) {
   return /*#__PURE__*/React.createElement("div", {
     style: {
-      background: T.panel,
-      border: "1px solid " + T.line,
-      borderRadius: 12,
-      padding: "14px 16px"
+      background: "rgba(20,26,36,0.5)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 14,
+      padding: "14px 16px",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.3)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1600,8 +1869,12 @@ function Leaderboard({
   }, "No traders yet. Make a trade to appear here.") : /*#__PURE__*/React.createElement("div", {
     style: {
       border: "1px solid " + T.line,
-      borderRadius: 12,
-      overflow: "hidden"
+      borderRadius: 14,
+      overflow: "hidden",
+      background: "rgba(18,23,32,0.42)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
     }
   }, board.map((r, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
@@ -2098,12 +2371,14 @@ const inputStyle = {
   width: "100%",
   marginTop: 8,
   padding: "12px 14px",
-  background: T.panel,
+  background: "rgba(255,255,255,0.045)",
   color: T.text,
-  border: "1px solid " + T.line,
-  borderRadius: 9,
+  border: "1px solid rgba(255,255,255,0.10)",
+  borderRadius: 11,
   fontSize: 15,
-  outline: "none"
+  outline: "none",
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)"
 };
 const secH = {
   fontSize: 15,
@@ -2114,19 +2389,24 @@ const secH = {
 };
 const empty = {
   color: T.muted,
-  background: T.panel,
-  border: "1px dashed " + T.line,
-  borderRadius: 12,
+  background: "rgba(20,26,36,0.40)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  border: "1px dashed rgba(255,255,255,0.12)",
+  borderRadius: 14,
   padding: "26px 20px",
   textAlign: "center",
   fontSize: 14
 };
 const cardBox = {
-  background: T.panel,
-  border: "1px solid " + T.line,
-  borderRadius: 12,
+  background: "rgba(20,26,36,0.5)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 14,
   padding: "16px 18px",
-  marginBottom: 14
+  marginBottom: 14,
+  boxShadow: "0 12px 36px rgba(0,0,0,0.34)"
 };
 const cardTitle = {
   fontWeight: 600,
