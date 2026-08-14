@@ -81,9 +81,16 @@ const RELAY_URL = "https://stock-club-relay.onrender.com";
  * app's code. Your database is protected by the security rules (RLS).
  * Paste your anon public key between the quotes below.               */
 const SUPABASE_URL = "https://ypsttcyxmoedumfjtsfo.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwc3R0Y3l4bW9lZHVtZmp0c2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2Mzk4MTIsImV4cCI6MjEwMjIxNTgxMn0.Oe5xUszFI40Crr_40Aletw13R93F0tmiJVoLTsWd1Eo";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
 const sbReady = SUPABASE_ANON_KEY.indexOf("PASTE_") === -1;
-const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storage: window.localStorage,
+    storageKey: "thefloor-auth"
+  }
+}) : null;
 const DEFAULT_CASH = 100000;
 const T = {
   bg: "#0E1116",
@@ -147,6 +154,7 @@ function App() {
   const [opens, setOpens] = useState({});
   const [flash, setFlash] = useState({});
   const [view, setView] = useState("market");
+  const [showWelcome, setShowWelcome] = useState(false);
   const [feed, setFeed] = useState(RELAY_URL ? "connecting" : "sim");
   const [trade, setTrade] = useState(null);
   const [board, setBoard] = useState([]);
@@ -168,6 +176,12 @@ function App() {
       ok
     });
     setTimeout(() => setToast(null), 2600);
+  };
+  const dismissWelcome = () => {
+    try {
+      if (user) localStorage.setItem("thefloor-welcomed:" + user.id, "1");
+    } catch (e) {}
+    setShowWelcome(false);
   };
 
   /* ---- prices: seed then poll relay ---- */
@@ -325,6 +339,9 @@ function App() {
       setAllowShorting(s ? s.allow_shorting : true);
       const player = await ensurePlayer(u);
       setMe(player);
+      try {
+        if (!localStorage.getItem("thefloor-welcomed:" + u.id)) setShowWelcome(true);
+      } catch (e) {}
       const p = await loadPortfolio(u, rnd, cash0);
       setPf(p);
       pfRef.current = p;
@@ -583,6 +600,9 @@ function App() {
   if (!user) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Login, {
     onSend: sendMagicLink
   }));
+  if (showWelcome) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Welcome, {
+    onEnter: dismissWelcome
+  }));
   const val = accountValue(pf, prices);
   const ret = startCash ? (val - startCash) / startCash * 100 : 0;
   return /*#__PURE__*/React.createElement(Shell, null, banner && /*#__PURE__*/React.createElement("div", {
@@ -699,6 +719,79 @@ function ConfigNote() {
       color: T.text
     }
   }, "SUPABASE_ANON_KEY"), " line near the top of index.html, then redeploy.")));
+}
+function Welcome({
+  onEnter
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: "100vh",
+      display: "grid",
+      placeItems: "center",
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 460,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: 14,
+      background: T.gold,
+      display: "grid",
+      placeItems: "center",
+      color: "#12140f",
+      fontWeight: 700,
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: 32,
+      margin: "0 auto 18px"
+    }
+  }, "▲"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 30,
+      letterSpacing: "0.04em"
+    }
+  }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.gold,
+      letterSpacing: "0.24em",
+      marginTop: 6
+    }
+  }, "EST. '26"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.text,
+      fontSize: 17,
+      lineHeight: 1.5,
+      margin: "24px 0 14px",
+      fontWeight: 500
+    }
+  }, "An investing club built to sharpen real-world market skills."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      fontSize: 14,
+      lineHeight: 1.6,
+      margin: "0 0 8px"
+    }
+  }, "Members trade live markets with simulated capital and compete on a shared leaderboard."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.faint,
+      fontSize: 13,
+      lineHeight: 1.6,
+      margin: "0 0 28px"
+    }
+  }, "Founded and operated by Jack Mizrachi and Joseph Mizrachi."), /*#__PURE__*/React.createElement("button", {
+    className: "primary",
+    style: {
+      width: "100%"
+    },
+    onClick: onEnter
+  }, "Enter")));
 }
 function Login({
   onSend
