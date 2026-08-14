@@ -117,6 +117,18 @@ input:focus { border-color: rgba(245,183,61,0.6) !important; box-shadow: 0 0 0 3
   .topbar-inner { justify-content: space-between; }
   .bottombar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(9,11,16,0.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid rgba(255,255,255,0.08); padding: 6px 4px calc(8px + env(safe-area-inset-bottom)); justify-content: space-around; }
 }
+
+/* ===== PER-SECTION tints + analytics grid ===== */
+.app-shell { transition: background 0.5s ease; }
+.view-portfolio { background: radial-gradient(1100px 620px at 12% -6%, rgba(245,183,61,0.10), transparent 55%); }
+.view-market { background: radial-gradient(1100px 620px at 12% -6%, rgba(70,197,96,0.09), transparent 55%); }
+.view-leaderboard { background: radial-gradient(1100px 620px at 12% -6%, rgba(129,101,255,0.12), transparent 55%); }
+.view-news { background: radial-gradient(1100px 620px at 12% -6%, rgba(70,150,255,0.10), transparent 55%); }
+.view-learn { background: radial-gradient(1100px 620px at 12% -6%, rgba(255,120,190,0.09), transparent 55%); }
+.view-research { background: radial-gradient(1100px 620px at 12% -6%, rgba(70,150,255,0.10), transparent 55%); }
+.view-admin { background: radial-gradient(1100px 620px at 12% -6%, rgba(251,91,71,0.09), transparent 55%); }
+.analytics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 720px) { .analytics { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -717,7 +729,7 @@ function App() {
       fontSize: 13
     }
   }, banner), /*#__PURE__*/React.createElement("div", {
-    className: "app-shell"
+    className: "app-shell view-" + view
   }, /*#__PURE__*/React.createElement(Sidebar, {
     view: view,
     setView: setView,
@@ -1731,7 +1743,13 @@ function Portfolio({
       color: T.down,
       fontWeight: 600
     }
-  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(Allocation, {
+  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(PortfolioAnalytics, {
+    pf: pf,
+    prices: prices,
+    opens: opens,
+    val: val,
+    dayPct: dayPct
+  }), /*#__PURE__*/React.createElement(Allocation, {
     pf: pf,
     prices: prices
   }), /*#__PURE__*/React.createElement("h2", {
@@ -2019,6 +2037,208 @@ function NewsItem({
       lineHeight: 1.5
     }
   }, n.summary)));
+}
+function PortfolioAnalytics({
+  pf,
+  prices,
+  opens,
+  val,
+  dayPct
+}) {
+  const positions = pf.positions || [];
+  if (positions.length === 0) return null;
+  // per-holding day P&L (attribution)
+  const rows = positions.map(pos => {
+    const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
+    const op = opens && opens[pos.symbol] != null ? opens[pos.symbol] : cur;
+    const dayPnl = pos.side === "long" ? pos.shares * (cur - op) : pos.shares * (op - cur);
+    const mv = pos.shares * cur;
+    return {
+      symbol: pos.symbol,
+      dayPnl: dayPnl,
+      mv: mv
+    };
+  });
+  const byPnl = rows.slice().sort((x, y) => y.dayPnl - x.dayPnl);
+  const maxAbs = Math.max.apply(null, rows.map(r => Math.abs(r.dayPnl)).concat([1]));
+  // concentration: top holdings by market value
+  const totalMv = rows.reduce((s, r) => s + Math.abs(r.mv), 0) || 1;
+  const conc = rows.slice().sort((x, y) => Math.abs(y.mv) - Math.abs(x.mv)).slice(0, 3).map(r => ({
+    symbol: r.symbol,
+    pct: Math.abs(r.mv) / totalMv * 100
+  }));
+  const top3 = conc.reduce((s, r) => s + r.pct, 0);
+  const level = top3 >= 60 ? {
+    t: "HIGH",
+    c: T.down
+  } : top3 >= 40 ? {
+    t: "MODERATE",
+    c: T.gold
+  } : {
+    t: "LOW",
+    c: T.up
+  };
+  // vs S&P today (SPY proxy)
+  const so = opens && opens.SPY,
+    sp = prices && prices.SPY;
+  const spx = so ? (sp - so) / so * 100 : null;
+  const bar = v => Math.max(4, Math.abs(v) / maxAbs * 100);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Analytics"), /*#__PURE__*/React.createElement("div", {
+    className: "analytics"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "What's driving today"), byPnl.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.symbol,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 9
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      width: 54,
+      fontWeight: 600,
+      fontSize: 13
+    }
+  }, r.symbol), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      height: 8,
+      background: "rgba(255,255,255,0.05)",
+      borderRadius: 5,
+      position: "relative",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: bar(r.dayPnl) + "%",
+      background: r.dayPnl >= 0 ? T.up : T.down,
+      borderRadius: 5,
+      opacity: 0.85
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      width: 78,
+      textAlign: "right",
+      fontSize: 12,
+      color: r.dayPnl >= 0 ? T.up : T.down
+    }
+  }, money(r.dayPnl))))), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: cardTitle
+  }, "Concentration"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: level.c,
+      letterSpacing: "0.06em"
+    }
+  }, level.t)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      marginBottom: 4
+    }
+  }, "Top 3 holdings"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 8,
+      background: "rgba(255,255,255,0.06)",
+      borderRadius: 5,
+      overflow: "hidden",
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: Math.min(100, top3) + "%",
+      height: "100%",
+      background: level.c,
+      borderRadius: 5
+    }
+  })), conc.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: r.symbol,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 13,
+      padding: "6px 0",
+      borderTop: i ? "1px solid rgba(255,255,255,0.05)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.faint,
+      marginRight: 8
+    }
+  }, "#", i + 1), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontWeight: 600
+    }
+  }, r.symbol)), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.muted
+    }
+  }, r.pct.toFixed(1), "%"))), spx != null && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 14,
+      paddingTop: 12,
+      borderTop: "1px solid rgba(255,255,255,0.06)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      marginBottom: 4
+    }
+  }, "You vs S&P 500 today"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontWeight: 600,
+      color: dayPct >= 0 ? T.up : T.down
+    }
+  }, pct(dayPct)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.faint,
+      fontSize: 12
+    }
+  }, "vs"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: spx >= 0 ? T.up : T.down
+    }
+  }, pct(spx)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      marginLeft: "auto",
+      color: dayPct >= spx ? T.up : T.down,
+      fontWeight: 600
+    }
+  }, dayPct >= spx ? "OUTPERFORMING" : "TRAILING"))))));
 }
 function Allocation({
   pf,
