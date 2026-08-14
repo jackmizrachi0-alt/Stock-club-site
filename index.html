@@ -81,7 +81,7 @@ const RELAY_URL = "https://stock-club-relay.onrender.com";
  * app's code. Your database is protected by the security rules (RLS).
  * Paste your anon public key between the quotes below.               */
 const SUPABASE_URL = "https://ypsttcyxmoedumfjtsfo.supabase.co";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwc3R0Y3l4bW9lZHVtZmp0c2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2Mzk4MTIsImV4cCI6MjEwMjIxNTgxMn0.Oe5xUszFI40Crr_40Aletw13R93F0tmiJVoLTsWd1Eo";
 const sbReady = SUPABASE_ANON_KEY.indexOf("PASTE_") === -1;
 const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
