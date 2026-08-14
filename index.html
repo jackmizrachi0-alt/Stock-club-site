@@ -213,6 +213,61 @@ a.news-item:hover { border-color: rgba(79,176,255,0.6) !important; box-shadow: 0
 /* buttons glow on hover */
 .mini:hover, .ghost:hover { box-shadow: 0 0 16px rgba(245,183,61,0.18); }
 .idx:hover { box-shadow: 0 0 26px rgba(245,183,61,0.22), 0 12px 30px rgba(0,0,0,0.5) !important; }
+
+/* ===== FINAL PUNCH (crank the glow) ===== */
+body { background:
+  radial-gradient(680px 480px at 4% -6%, rgba(245,183,61,0.30), transparent 50%),
+  radial-gradient(760px 600px at 108% 2%, rgba(129,101,255,0.34), transparent 52%),
+  radial-gradient(720px 620px at 94% 112%, rgba(79,176,255,0.26), transparent 54%),
+  radial-gradient(660px 540px at 0% 118%, rgba(70,197,96,0.20), transparent 54%),
+  #050507 !important; }
+/* brighter lit rings on every card */
+.analytics > div::before, .cards > div::before {
+  background: linear-gradient(135deg, rgba(245,183,61,0.9), rgba(129,101,255,0.5) 50%, rgba(79,176,255,0.7)) !important;
+  opacity: 1 !important; padding: 1.4px !important;
+}
+.analytics > div, .cards > div { box-shadow: 0 0 26px rgba(129,101,255,0.10), 0 14px 34px rgba(0,0,0,0.55) !important; }
+.hero { border: 1px solid rgba(245,183,61,0.5) !important; box-shadow: 0 0 46px rgba(245,183,61,0.22), 0 22px 54px rgba(0,0,0,0.6) !important; }
+.glowcard { box-shadow: 0 0 30px rgba(245,183,61,0.12), 0 18px 44px rgba(0,0,0,0.55) !important; }
+.glowcard::before { opacity: 1 !important; background: linear-gradient(135deg, rgba(245,183,61,0.85), rgba(129,101,255,0.55) 50%, rgba(79,176,255,0.7)) !important; }
+.idx { border: 1px solid rgba(245,183,61,0.45) !important; box-shadow: 0 0 26px rgba(245,183,61,0.16), 0 10px 28px rgba(0,0,0,0.5) !important; }
+.mv { border: 1px solid rgba(129,101,255,0.4) !important; box-shadow: 0 0 20px rgba(129,101,255,0.12) !important; }
+.navitem.active { box-shadow: 0 0 30px rgba(245,183,61,0.34) !important; }
+.display { text-shadow: 0 0 34px rgba(245,183,61,0.28) !important; }
+
+/* ===== NEON PASS (kill dead zones, light up boxes) ===== */
+/* stronger, more saturated ambient field so NO area reads as flat navy */
+body { background:
+  radial-gradient(620px 460px at 2% -8%, rgba(245,183,61,0.42), transparent 48%),
+  radial-gradient(720px 560px at 110% 0%, rgba(150,90,255,0.46), transparent 50%),
+  radial-gradient(680px 600px at 96% 114%, rgba(60,180,255,0.36), transparent 52%),
+  radial-gradient(620px 520px at -2% 120%, rgba(60,220,130,0.30), transparent 52%),
+  radial-gradient(900px 500px at 50% 46%, rgba(150,90,255,0.10), transparent 60%),
+  #060409 !important; }
+/* top strip + sidebar are see-through so the neon field glows through the dead zones */
+.sidebar { background: linear-gradient(180deg, rgba(20,10,30,0.55), rgba(8,6,12,0.75)) !important; border-right: 1px solid rgba(150,90,255,0.22) !important; }
+.main > div:first-child { background: rgba(10,8,16,0.55) !important; }
+/* BOXES get inner life: lit top gradient + inner glow, not flat */
+.cards > div, .analytics > div, .glowcard, .idx, .mv, .news-item, .stat-glow {
+  background: linear-gradient(160deg, rgba(255,255,255,0.045), rgba(14,10,20,0.9) 60%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 30px rgba(150,90,255,0.05), 0 16px 40px rgba(0,0,0,0.55) !important;
+}
+/* neon rings, brighter */
+.cards > div::before, .analytics > div::before {
+  background: linear-gradient(135deg, #F5B73D, #B067FF 48%, #37B6FF) !important; opacity: 1 !important; padding: 1.5px !important;
+}
+.hero { background: linear-gradient(140deg, rgba(245,183,61,0.22), rgba(150,90,255,0.10) 60%, #0B0812 90%) !important; border: 1px solid rgba(245,183,61,0.55) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 60px rgba(245,183,61,0.26), 0 24px 56px rgba(0,0,0,0.6) !important; }
+.idx { border: 1px solid rgba(245,183,61,0.55) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 30px rgba(245,183,61,0.20), 0 12px 30px rgba(0,0,0,0.5) !important; }
+.mv { border: 1px solid rgba(150,90,255,0.55) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 26px rgba(150,90,255,0.20) !important; }
+.news-item { border: 1px solid rgba(60,180,255,0.4) !important; }
+/* per-menu neon accent on the active nav item */
+.navitem.active { box-shadow: 0 0 34px rgba(245,183,61,0.4) !important; border: 1px solid rgba(245,183,61,0.5) !important; }
+/* section header gets a neon underline glow so "Analytics" etc aren't bland */
+.content h2 { position: relative; padding-bottom: 4px; }
+.content h2::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 42px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #F5B73D, #B067FF); box-shadow: 0 0 14px rgba(176,103,255,0.6); }
+.display { text-shadow: 0 0 40px rgba(245,183,61,0.35) !important; }
+/* progress bars pop with glow */
+.content [style*="borderRadius: 5"] > div { box-shadow: 0 0 12px currentColor; }
 </style>
 </head>
 <body>
