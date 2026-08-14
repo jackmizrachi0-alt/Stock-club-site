@@ -66,6 +66,12 @@ input:focus { border-color: #F5B73D !important; }
 .idx .k { font-size: 11px; color: #8B94A3; letter-spacing: .08em; text-transform: uppercase; }
 .idx .v { font-size: 18px; font-weight: 600; margin-top: 4px; }
 @media (max-width: 520px) { .idx .v { font-size: 15px; } .idx { padding: 10px 12px; } }
+
+.movers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mv { background: #12161D; border: 1px solid #232B37; border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mvk { font-size: 10px; letter-spacing: .1em; color: #8B94A3; }
+.mvi { font-size: 12px; }
+@media (max-width: 520px) { .movers { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -115,6 +121,37 @@ const T = {
   down: "#FB5B47"
 };
 const UNIVERSE = [["AAPL", "Apple", 225], ["MSFT", "Microsoft", 430], ["NVDA", "NVIDIA", 130], ["AMZN", "Amazon", 185], ["GOOGL", "Alphabet", 175], ["META", "Meta", 560], ["TSLA", "Tesla", 250], ["AMD", "Adv. Micro Devices", 155], ["NFLX", "Netflix", 680], ["DIS", "Disney", 95], ["JPM", "JPMorgan Chase", 210], ["V", "Visa", 285], ["WMT", "Walmart", 75], ["KO", "Coca-Cola", 62], ["PEP", "PepsiCo", 170], ["XOM", "Exxon Mobil", 115], ["BA", "Boeing", 175], ["NKE", "Nike", 78], ["SBUX", "Starbucks", 95], ["UBER", "Uber", 72], ["PYPL", "PayPal", 68], ["INTC", "Intel", 22], ["GME", "GameStop", 25], ["AMC", "AMC Ent.", 5], ["SPY", "S&P 500 ETF", 555], ["QQQ", "Nasdaq-100 ETF", 480], ["VOO", "Vanguard S&P 500", 510], ["ARKK", "ARK Innovation ETF", 48], ["DIA", "Dow Jones ETF", 415]];
+const SECTORS = {
+  AAPL: "Technology",
+  MSFT: "Technology",
+  NVDA: "Technology",
+  AMD: "Technology",
+  INTC: "Technology",
+  UBER: "Technology",
+  AMZN: "Consumer",
+  WMT: "Consumer",
+  KO: "Consumer",
+  PEP: "Consumer",
+  NKE: "Consumer",
+  SBUX: "Consumer",
+  GME: "Consumer",
+  GOOGL: "Communications",
+  META: "Communications",
+  NFLX: "Communications",
+  DIS: "Communications",
+  AMC: "Communications",
+  TSLA: "Autos",
+  JPM: "Financials",
+  V: "Financials",
+  PYPL: "Financials",
+  XOM: "Energy",
+  BA: "Industrials",
+  SPY: "ETF",
+  QQQ: "ETF",
+  VOO: "ETF",
+  ARKK: "ETF",
+  DIA: "ETF"
+};
 const GLOSSARY = [["Long", "Buying an asset because you expect the price to go up. You profit when it rises."], ["Short", "Borrowing shares to sell now and buy back later. You profit when the price falls, and lose if it rises."], ["Buy", "Opening or adding to a position by purchasing shares."], ["Sell", "Closing a position by getting rid of shares you own."], ["Put", "An option that gains value when a stock falls. A bet the price drops."], ["Call", "An option that gains value when a stock rises. A bet the price climbs."], ["Option", "A contract to buy or sell a stock at a set price by a set date, without the obligation to."], ["ETF", "Exchange-Traded Fund. One ticker that holds a basket of stocks, so you buy a whole slice of the market at once (e.g. SPY tracks the S&P 500)."], ["Dividend", "A cash payment some companies send shareholders, usually quarterly, from their profits."], ["Bull market", "A stretch where prices are broadly rising and optimism is high."], ["Bear market", "A stretch where prices are broadly falling, often defined as a 20%+ drop."], ["Portfolio", "The full collection of everything you hold, plus your cash."], ["Diversification", "Spreading money across many assets so one bad pick can't sink you."], ["Market order", "An order to trade right now at whatever the current price is."], ["Limit order", "An order that only fills at a price you set or better."], ["Volatility", "How sharply a price swings. High volatility means bigger, faster moves."], ["P/E ratio", "Price divided by earnings per share. A rough gauge of how expensive a stock is versus its profits."], ["Market cap", "Total value of a company: share price times number of shares."], ["IPO", "Initial Public Offering. The first time a company sells shares to the public."], ["Ticker", "The short symbol that identifies a stock, like AAPL for Apple."], ["Bid / Ask", "The bid is the highest price buyers offer; the ask is the lowest price sellers accept."], ["Spread", "The gap between the bid and the ask price."], ["Margin", "Borrowed money from a broker used to trade a larger position than your cash allows."], ["Leverage", "Using borrowed money to amplify a position. It magnifies both gains and losses."], ["Blue chip", "A large, well-established, financially solid company (think Apple or Coca-Cola)."], ["Index fund", "A fund built to mirror a market index rather than beat it, usually with low fees."], ["Volume", "How many shares changed hands in a period. High volume signals strong interest."], ["Liquidity", "How easily you can buy or sell without moving the price. Cash is the most liquid."], ["Capital gain", "The profit when you sell something for more than you paid."], ["Broker", "The platform or firm that executes your trades (Robinhood, Fidelity, and so on)."]];
 const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString("en-US", {
   minimumFractionDigits: 2,
@@ -170,6 +207,7 @@ function App() {
   const [board, setBoard] = useState([]);
   const [news, setNews] = useState(SAMPLE_NEWS);
   const [lookups, setLookups] = useState([]);
+  const [detailSymbol, setDetailSymbol] = useState(null);
   const [allowShorting, setAllowShorting] = useState(true);
   const [adminPlayers, setAdminPlayers] = useState([]);
   const [toast, setToast] = useState(null);
@@ -178,6 +216,7 @@ function App() {
     pricesRef = useRef(prices),
     firstLive = useRef(true),
     customRefRef = useRef({});
+  const historyRef = useRef({});
   pfRef.current = pf;
   pricesRef.current = prices;
   const flashToast = (msg, ok = true) => {
@@ -186,6 +225,10 @@ function App() {
       ok
     });
     setTimeout(() => setToast(null), 2600);
+  };
+  const openStock = sym => {
+    setDetailSymbol(sym);
+    setView("research");
   };
   const dismissWelcome = () => {
     try {
@@ -221,6 +264,11 @@ function App() {
           return Object.assign({}, prev, data.prices);
         });
         if (data.opens && Object.keys(data.opens).length) setOpens(prev => Object.assign({}, prev, data.opens));
+        const H = historyRef.current;
+        for (const k in data.prices) {
+          (H[k] = H[k] || []).push(data.prices[k]);
+          if (H[k].length > 40) H[k].shift();
+        }
         firstLive.current = false;
         setFeed("live");
       } catch (e) {
@@ -646,7 +694,9 @@ function App() {
     onTrade: setTrade,
     onLookup: lookupTicker,
     lookups: lookups,
-    allowShorting: allowShorting
+    allowShorting: allowShorting,
+    onOpenStock: openStock,
+    history: historyRef.current
   }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
     pf: pf,
     prices: prices,
@@ -661,7 +711,12 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "admin" && me && me.is_admin && /*#__PURE__*/React.createElement(Admin, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
+    symbol: detailSymbol,
+    prices: prices,
+    opens: opens,
+    onBack: () => setView("market")
+  }), view === "admin" && me && me.is_admin && /*#__PURE__*/React.createElement(Admin, {
     startCash: startCash,
     allowShorting: allowShorting,
     round: round,
@@ -1108,6 +1163,74 @@ function Nav({
     }
   }, label))));
 }
+function Movers({
+  prices,
+  opens
+}) {
+  const moves = UNIVERSE.filter(([s]) => opens[s]).map(([s]) => ({
+    s,
+    ch: (prices[s] - opens[s]) / opens[s] * 100
+  })).sort((a, b) => b.ch - a.ch);
+  if (moves.length < 2) return null;
+  const gain = moves.slice(0, 3),
+    lose = moves.slice(-3).reverse();
+  const chip = (m, color) => /*#__PURE__*/React.createElement("span", {
+    key: m.s,
+    className: "mvi"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontWeight: 600
+    }
+  }, m.s), " ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color
+    }
+  }, pct(m.ch)));
+  return /*#__PURE__*/React.createElement("div", {
+    className: "movers"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mv"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mvk"
+  }, "GAINERS"), gain.map(m => chip(m, T.up))), /*#__PURE__*/React.createElement("div", {
+    className: "mv"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mvk"
+  }, "LOSERS"), lose.map(m => chip(m, T.down))));
+}
+function Sparkline({
+  data,
+  up
+}) {
+  if (!data || data.length < 2) return /*#__PURE__*/React.createElement("svg", {
+    width: "58",
+    height: "20",
+    style: {
+      display: "block"
+    }
+  });
+  const min = Math.min.apply(null, data),
+    max = Math.max.apply(null, data),
+    range = max - min || 1;
+  const w = 58,
+    h = 20;
+  const pts = data.map((v, i) => i / (data.length - 1) * w + "," + (h - (v - min) / range * h)).join(" ");
+  return /*#__PURE__*/React.createElement("svg", {
+    width: w,
+    height: h,
+    style: {
+      display: "block"
+    }
+  }, /*#__PURE__*/React.createElement("polyline", {
+    points: pts,
+    fill: "none",
+    stroke: up ? T.up : T.down,
+    strokeWidth: "1.5",
+    strokeLinejoin: "round"
+  }));
+}
 function Market({
   prices,
   opens,
@@ -1115,7 +1238,9 @@ function Market({
   onTrade,
   onLookup,
   lookups,
-  allowShorting
+  allowShorting,
+  onOpenStock,
+  history
 }) {
   const [q, setQ] = useState("");
   const [looking, setLooking] = useState(false);
@@ -1140,7 +1265,23 @@ function Market({
     return /*#__PURE__*/React.createElement("div", {
       key: s,
       className: "mkt-row"
-    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
+      onClick: () => onOpenStock && onOpenStock(s),
+      style: {
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        minWidth: 0,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontWeight: 600,
         fontFamily: "'JetBrains Mono', monospace"
@@ -1152,6 +1293,15 @@ function Market({
         marginLeft: 10
       }
     }, n)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: "auto",
+        flexShrink: 0,
+        opacity: 0.9
+      }
+    }, /*#__PURE__*/React.createElement(Sparkline, {
+      data: history && history[s],
+      up: history && history[s] && history[s].length > 1 ? history[s][history[s].length - 1] >= history[s][0] : opens[s] ? prices[s] >= opens[s] : true
+    }))), /*#__PURE__*/React.createElement("span", {
       className: "r mono",
       style: {
         background: f === 1 ? "rgba(63,185,80,.14)" : f === -1 ? "rgba(240,82,62,.14)" : "transparent",
@@ -1209,7 +1359,10 @@ function Market({
         color: ich >= 0 ? T.up : T.down
       }
     }, pct(ich)));
-  })), /*#__PURE__*/React.createElement("input", {
+  })), /*#__PURE__*/React.createElement(Movers, {
+    prices: prices,
+    opens: opens
+  }), /*#__PURE__*/React.createElement("input", {
     value: q,
     onChange: e => {
       setQ(e.target.value);
@@ -1316,7 +1469,10 @@ function Portfolio({
     label: "RETURN",
     value: pct(ret),
     color: good ? T.up : T.down
-  })), /*#__PURE__*/React.createElement("h2", {
+  })), /*#__PURE__*/React.createElement(Allocation, {
+    pf: pf,
+    prices: prices
+  }), /*#__PURE__*/React.createElement("h2", {
     style: secH
   }, "Positions"), !pf.positions || pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: empty
@@ -1590,6 +1746,167 @@ function NewsItem({
       lineHeight: 1.5
     }
   }, n.summary)));
+}
+function Allocation({
+  pf,
+  prices
+}) {
+  const alloc = {};
+  let total = 0;
+  for (const pos of pf.positions || []) {
+    if (pos.side !== "long") continue;
+    const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
+    const v = pos.shares * cur;
+    const sec = SECTORS[pos.symbol] || "Other";
+    alloc[sec] = (alloc[sec] || 0) + v;
+    total += v;
+  }
+  const rows = Object.keys(alloc).map(k => ({
+    k,
+    v: alloc[k],
+    pct: total ? alloc[k] / total * 100 : 0
+  })).sort((a, b) => b.v - a.v);
+  if (total <= 0) return null;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Allocation"), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, rows.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.k,
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 13,
+      marginBottom: 5
+    }
+  }, /*#__PURE__*/React.createElement("span", null, r.k), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.muted
+    }
+  }, r.pct.toFixed(1), "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 7,
+      background: T.panel2,
+      borderRadius: 5,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: r.pct + "%",
+      height: "100%",
+      background: T.gold,
+      borderRadius: 5
+    }
+  }))))));
+}
+function Research({
+  symbol,
+  prices,
+  opens,
+  onBack
+}) {
+  const [items, setItems] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    setItems(null);
+    (async () => {
+      try {
+        const r = await fetch(RELAY_URL.replace(/\/$/, "") + "/api/company-news?symbol=" + encodeURIComponent(symbol));
+        const d = await r.json();
+        if (alive) setItems(Array.isArray(d.items) ? d.items : []);
+      } catch (e) {
+        if (alive) setItems([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [symbol]);
+  const p = prices[symbol],
+    o = opens[symbol],
+    ch = o ? (p - o) / o * 100 : 0;
+  const nameRow = UNIVERSE.find(u => u[0] === symbol);
+  const name = nameRow ? nameRow[1] : "";
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    onClick: onBack
+  }, "← Back"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 18,
+      display: "flex",
+      alignItems: "baseline",
+      gap: 14,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'JetBrains Mono', monospace",
+      fontWeight: 700,
+      fontSize: 26
+    }
+  }, symbol), name && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.faint,
+      fontSize: 14
+    }
+  }, name)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 12,
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontSize: 24,
+      fontWeight: 600
+    }
+  }, p != null ? price(p) : "\u2014"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: ch >= 0 ? T.up : T.down,
+      fontSize: 15
+    }
+  }, pct(ch), " today")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "mini buy",
+    onClick: () => window.scrollTo(0, 0),
+    style: {
+      display: "none"
+    }
+  })), /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Recent news"), items === null && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 14
+    }
+  }, "Loading news\\u2026"), items && items.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "No recent news for ", symbol, "."), items && items.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gap: 10
+    }
+  }, items.map(n => /*#__PURE__*/React.createElement(NewsItem, {
+    key: n.id,
+    n: n
+  }))));
 }
 function Learn() {
   const [q, setQ] = useState("");
