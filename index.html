@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body { background: #050506; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
@@ -156,6 +156,31 @@ h2 { letter-spacing: 0.01em; }
 /* ===== HEADINGS ===== */
 h1, h2 { font-weight: 700; letter-spacing: -0.02em; }
 .wordmark { font-weight: 800; letter-spacing: -0.01em; }
+
+/* ===== CREATIVE PASS (glow, display font, ambient haze) ===== */
+.display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-variant-numeric: tabular-nums; }
+/* ambient colored haze behind everything */
+body { background:
+  radial-gradient(760px 520px at 8% -4%, rgba(245,183,61,0.14), transparent 55%),
+  radial-gradient(820px 640px at 104% 8%, rgba(129,101,255,0.16), transparent 55%),
+  radial-gradient(720px 620px at 88% 108%, rgba(79,176,255,0.12), transparent 58%),
+  radial-gradient(680px 560px at 6% 112%, rgba(70,197,96,0.09), transparent 58%),
+  #060608; }
+.main { position: relative; }
+/* glowing colored card outline (for feature cards) */
+.glowcard { position: relative; background: #0E0E12; border: 1px solid rgba(255,255,255,0.09); border-radius: 18px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 0 0 1px rgba(245,183,61,0.08), 0 18px 44px rgba(0,0,0,0.5); overflow: hidden; }
+.glowcard::before { content: ""; position: absolute; inset: -1px; border-radius: 18px; padding: 1px; background: linear-gradient(135deg, rgba(245,183,61,0.55), rgba(129,101,255,0.35) 45%, rgba(79,176,255,0.35)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 0.9; }
+/* hero gets a stronger lit ring + colored glow */
+.hero { background: linear-gradient(140deg, rgba(245,183,61,0.16), #0E0E12 58%); border: 1px solid rgba(245,183,61,0.30); box-shadow: 0 0 34px rgba(245,183,61,0.14), 0 20px 50px rgba(0,0,0,0.55); border-radius: 20px; }
+/* stat cards: subtle lit top edge */
+/* nav active: gold glow */
+.navitem.active { box-shadow: 0 0 20px rgba(245,183,61,0.18); }
+/* smoother transitions everywhere */
+.navitem, .btab, .tab, .mini, .ghost, .idx, .mkt-row, .glowcard, .hero, button { transition: all 0.18s ease; }
+.idx:hover { transform: translateY(-2px); border-color: rgba(245,183,61,0.35); }
+.glowcard:hover { transform: translateY(-2px); }
+/* bigger, chunkier section headers */
+h2 { font-family: 'Space Grotesk','Inter',sans-serif; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1600,7 +1625,7 @@ function Market({
       setQ(e.target.value);
       setLookErr("");
     },
-    placeholder: "Search any ticker (e.g. AAPL, COST, SHOP)\\u2026",
+    placeholder: "Search any ticker (e.g. AAPL, COST, SHOP)…",
     style: Object.assign({}, inputStyle, {
       marginTop: 0,
       marginBottom: 16
@@ -1714,12 +1739,13 @@ function Portfolio({
       letterSpacing: "0.1em"
     }
   }, "PORTFOLIO VALUE"), /*#__PURE__*/React.createElement("div", {
-    className: "mono",
+    className: "display",
     style: {
-      fontSize: 40,
-      fontWeight: 700,
+      fontSize: 46,
+      fontWeight: 800,
       marginTop: 8,
-      lineHeight: 1
+      lineHeight: 1,
+      letterSpacing: "-0.02em"
     }
   }, money(val)), /*#__PURE__*/React.createElement("div", {
     className: "mono",
@@ -2257,6 +2283,50 @@ function PortfolioAnalytics({
     }
   }, dayPct >= spx ? "OUTPERFORMING" : "TRAILING"))))));
 }
+const DONUT = ["#F5B73D", "#46C560", "#4FB0FF", "#B98BFF", "#FB5B47", "#37D3C4", "#FF8FC7", "#FFD166", "#7C8BFF", "#9AE66E"];
+function Donut({
+  rows,
+  total
+}) {
+  const size = 168,
+    r = 62,
+    cx = size / 2,
+    cy = size / 2,
+    C = 2 * Math.PI * r;
+  let acc = 0;
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 " + size + " " + size,
+    style: {
+      transform: "rotate(-90deg)"
+    }
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: cx,
+    cy: cy,
+    r: r,
+    fill: "none",
+    stroke: "rgba(255,255,255,0.06)",
+    strokeWidth: "16"
+  }), rows.map((row, i) => {
+    const frac = row.v / total;
+    const len = frac * C;
+    const el = /*#__PURE__*/React.createElement("circle", {
+      key: i,
+      cx: cx,
+      cy: cy,
+      r: r,
+      fill: "none",
+      stroke: DONUT[i % DONUT.length],
+      strokeWidth: "16",
+      strokeDasharray: len + " " + (C - len),
+      strokeDashoffset: -acc,
+      strokeLinecap: "butt"
+    });
+    acc += len;
+    return el;
+  }));
+}
 function Allocation({
   pf,
   prices
@@ -2277,42 +2347,84 @@ function Allocation({
     pct: total ? alloc[k] / total * 100 : 0
   })).sort((a, b) => b.v - a.v);
   if (total <= 0) return null;
+  const holdings = (pf.positions || []).filter(p => p.side === "long").length;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
     style: secH
   }, "Allocation"), /*#__PURE__*/React.createElement("div", {
-    style: cardBox
-  }, rows.map(r => /*#__PURE__*/React.createElement("div", {
-    key: r.k,
-    style: {
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
     style: {
       display: "flex",
-      justifyContent: "space-between",
-      fontSize: 13,
-      marginBottom: 5
-    }
-  }, /*#__PURE__*/React.createElement("span", null, r.k), /*#__PURE__*/React.createElement("span", {
-    className: "mono",
-    style: {
-      color: T.muted
-    }
-  }, r.pct.toFixed(1), "%")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: 7,
-      background: T.panel2,
-      borderRadius: 5,
-      overflow: "hidden"
+      alignItems: "center",
+      gap: 22,
+      flexWrap: "wrap",
+      justifyContent: "center"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      width: r.pct + "%",
-      height: "100%",
-      background: T.gold,
-      borderRadius: 5
+      position: "relative",
+      width: 168,
+      height: 168,
+      flexShrink: 0
     }
-  }))))));
+  }, /*#__PURE__*/React.createElement(Donut, {
+    rows: rows,
+    total: total
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "display",
+    style: {
+      fontSize: 30,
+      fontWeight: 800,
+      lineHeight: 1
+    }
+  }, rows.length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: T.muted,
+      letterSpacing: "0.14em",
+      marginTop: 2
+    }
+  }, "SECTORS"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 180
+    }
+  }, rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: r.k,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "6px 0"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: 3,
+      background: DONUT[i % DONUT.length],
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      fontSize: 14
+    }
+  }, r.k), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, r.pct.toFixed(1), "%"))))));
 }
 function Research({
   symbol,
