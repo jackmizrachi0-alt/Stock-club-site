@@ -181,6 +181,38 @@ body { background:
 .glowcard:hover { transform: translateY(-2px); }
 /* bigger, chunkier section headers */
 h2 { font-family: 'Space Grotesk','Inter',sans-serif; font-weight: 700; }
+
+/* ===== GLOW BOOST (visible color everywhere) ===== */
+body { background:
+  radial-gradient(720px 520px at 6% -6%, rgba(245,183,61,0.22), transparent 52%),
+  radial-gradient(820px 640px at 106% 4%, rgba(129,101,255,0.26), transparent 54%),
+  radial-gradient(760px 640px at 92% 110%, rgba(79,176,255,0.20), transparent 56%),
+  radial-gradient(700px 560px at 2% 116%, rgba(70,197,96,0.15), transparent 56%),
+  #060608 !important; }
+/* every card gets the lit gradient ring */
+.stat-glow, .analytics > div, .cards > div {
+  position: relative; background: #0E0E13 !important; border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 16px !important; overflow: hidden;
+}
+.analytics > div::before, .cards > div::before {
+  content: ""; position: absolute; inset: 0; border-radius: 16px; padding: 1px;
+  background: linear-gradient(135deg, rgba(245,183,61,0.55), rgba(129,101,255,0.30) 50%, rgba(79,176,255,0.40));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 0.75;
+}
+/* index + movers + news: colored lit border */
+.idx { border: 1px solid rgba(245,183,61,0.28) !important; box-shadow: 0 0 22px rgba(245,183,61,0.10), 0 10px 28px rgba(0,0,0,0.5) !important; }
+.mv { border: 1px solid rgba(129,101,255,0.28) !important; }
+.news-item { border: 1px solid rgba(79,176,255,0.20) !important; }
+a.news-item:hover { border-color: rgba(79,176,255,0.6) !important; box-shadow: 0 0 24px rgba(79,176,255,0.18) !important; }
+/* table wrapper cards get a soft lit ring too */
+.mkt-head { border-bottom: 1px solid rgba(245,183,61,0.18) !important; }
+/* sidebar active + top-of-value pop */
+.navitem.active { box-shadow: 0 0 26px rgba(245,183,61,0.26) !important; border: 1px solid rgba(245,183,61,0.3); }
+.display { text-shadow: 0 0 30px rgba(245,183,61,0.18); }
+/* buttons glow on hover */
+.mini:hover, .ghost:hover { box-shadow: 0 0 16px rgba(245,183,61,0.18); }
+.idx:hover { box-shadow: 0 0 26px rgba(245,183,61,0.22), 0 12px 30px rgba(0,0,0,0.5) !important; }
 </style>
 </head>
 <body>
@@ -1882,12 +1914,10 @@ function Stat({
   color
 }) {
   return /*#__PURE__*/React.createElement("div", {
+    className: "stat-glow",
     style: {
-      background: "#121212",
-      border: "1px solid rgba(255,255,255,0.10)",
-      borderRadius: 14,
       padding: "14px 16px",
-      boxShadow: "0 10px 28px rgba(0,0,0,0.38)"
+      boxShadow: "0 10px 28px rgba(0,0,0,0.4)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
