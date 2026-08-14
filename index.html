@@ -11,42 +11,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-body { background: #0E1116; font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+body { background: radial-gradient(1100px 520px at 50% -8%, rgba(245,183,61,0.10), transparent 60%), #0A0D13; font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
 .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
 .tab { background: none; border: none; padding: 14px 14px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: -1px; }
-.primary { background: #E6A93C; color: #12140f; border: none; border-radius: 9px; padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.primary { background: #F5B73D; color: #12140f; border: none; border-radius: 9px; padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .primary:hover { filter: brightness(1.06); }
-.ghost { background: #1B2129; color: #8A93A2; border: 1px solid #242C38; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
-.ghost:hover { color: #E7E2D6; }
-.link { background: none; border: none; color: #E6A93C; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
-.mini { border: 1px solid #242C38; background: #1B2129; color: #E7E2D6; border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
-.mini.buy:hover { background: rgba(63,185,80,.16); border-color: #3FB950; color: #3FB950; }
-.mini.short:hover { background: rgba(240,82,62,.16); border-color: #F0523E; color: #F0523E; }
-.mini.close:hover { border-color: #8A93A2; color: #E7E2D6; }
+.ghost { background: #1A1F28; color: #8B94A3; border: 1px solid #232B37; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.ghost:hover { color: #ECE7DB; }
+.link { background: none; border: none; color: #F5B73D; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+.mini { border: 1px solid #232B37; background: #1A1F28; color: #ECE7DB; border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.mini.buy:hover { background: rgba(63,185,80,.16); border-color: #46C560; color: #46C560; }
+.mini.short:hover { background: rgba(240,82,62,.16); border-color: #FB5B47; color: #FB5B47; }
+.mini.close:hover { border-color: #8B94A3; color: #ECE7DB; }
 .mkt-head, .mkt-row { display: grid; grid-template-columns: 1fr 120px 90px 150px; align-items: center; padding: 12px 16px; }
-.mkt-head { background: #161B22; color: #8A93A2; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
-.mkt-row { border-top: 1px solid #242C38; }
-.mkt-row:hover { background: #161B22; }
+.mkt-head { background: #12161D; color: #8B94A3; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mkt-row { border-top: 1px solid #232B37; }
+.mkt-row:hover { background: #12161D; }
 .pos-head, .pos-row { display: grid; grid-template-columns: 1.4fr 70px 90px 90px 1.2fr 90px; align-items: center; padding: 12px 16px; }
-.pos-head { background: #161B22; color: #8A93A2; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
-.pos-row { border-top: 1px solid #242C38; }
-.lb-row { display: flex; align-items: center; padding: 13px 16px; border-top: 1px solid #242C38; }
+.pos-head { background: #12161D; color: #8B94A3; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.pos-row { border-top: 1px solid #232B37; }
+.lb-row { display: flex; align-items: center; padding: 13px 16px; border-top: 1px solid #232B37; }
 .lb-row:first-child { border-top: none; }
-.news-item { display: flex; gap: 14px; text-decoration: none; color: #E7E2D6; background: #161B22; border: 1px solid #242C38; border-radius: 10px; padding: 14px; align-items: flex-start; }
+.news-item { display: flex; gap: 14px; text-decoration: none; color: #ECE7DB; background: #12161D; border: 1px solid #232B37; border-radius: 10px; padding: 14px; align-items: flex-start; }
 a.news-item:hover { border-color: #8a6a2c; }
 .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .r { text-align: right; }
 .act { text-align: right; }
 .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 5px; }
-.badge.long { background: rgba(63,185,80,.15); color: #3FB950; }
-.badge.short { background: rgba(240,82,62,.15); color: #F0523E; }
+.badge.long { background: rgba(63,185,80,.15); color: #46C560; }
+.badge.short { background: rgba(240,82,62,.15); color: #FB5B47; }
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .overlay { position: fixed; inset: 0; background: rgba(6,8,11,.66); display: grid; place-items: center; z-index: 50; padding: 18px; backdrop-filter: blur(2px); }
-.modal { width: 100%; max-width: 380px; background: #0E1116; border: 1px solid #242C38; border-radius: 16px; padding: 22px; }
-.x { background: none; border: none; color: #8A93A2; font-size: 26px; line-height: 1; cursor: pointer; }
-.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #161B22; border: 1px solid #242C38; border-radius: 10px; padding: 12px 18px; font-size: 14px; z-index: 60; box-shadow: 0 8px 30px rgba(0,0,0,.4); color: #E7E2D6; }
+.modal { width: 100%; max-width: 380px; background: #0A0D13; border: 1px solid #232B37; border-radius: 16px; padding: 22px; }
+.x { background: none; border: none; color: #8B94A3; font-size: 26px; line-height: 1; cursor: pointer; }
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #12161D; border: 1px solid #232B37; border-radius: 10px; padding: 12px 18px; font-size: 14px; z-index: 60; box-shadow: 0 8px 30px rgba(0,0,0,.4); color: #ECE7DB; }
 input { font-family: 'Space Grotesk', system-ui, sans-serif; }
-input:focus { border-color: #E6A93C !important; }
+input:focus { border-color: #F5B73D !important; }
 @media (max-width: 620px) {
   .cards { grid-template-columns: repeat(2, 1fr); }
   .mkt-head, .mkt-row { grid-template-columns: 1fr 84px 108px; }
@@ -56,6 +56,16 @@ input:focus { border-color: #E6A93C !important; }
   .pos-head span:nth-child(4), .pos-row span:nth-child(4) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.wordmark { background: linear-gradient(92deg, #F7DE93, #F5B73D 65%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.primary { box-shadow: 0 6px 22px rgba(245,183,61,.22); }
+.primary:hover { box-shadow: 0 8px 26px rgba(245,183,61,.30); }
+.tab:hover { color: #ECE7DB; }
+.idxrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.idx { background: linear-gradient(160deg, #171D27, #11151C); border: 1px solid #232B37; border-radius: 12px; padding: 12px 14px; }
+.idx .k { font-size: 11px; color: #8B94A3; letter-spacing: .08em; text-transform: uppercase; }
+.idx .v { font-size: 18px; font-weight: 600; margin-top: 4px; }
+@media (max-width: 520px) { .idx .v { font-size: 15px; } .idx { padding: 10px 12px; } }
 </style>
 </head>
 <body>
@@ -93,16 +103,16 @@ const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_UR
 }) : null;
 const DEFAULT_CASH = 100000;
 const T = {
-  bg: "#0E1116",
-  panel: "#161B22",
-  panel2: "#1B2129",
-  line: "#242C38",
-  text: "#E7E2D6",
-  muted: "#8A93A2",
-  faint: "#5A626F",
-  gold: "#E6A93C",
-  up: "#3FB950",
-  down: "#F0523E"
+  bg: "#0A0D13",
+  panel: "#12161D",
+  panel2: "#1A1F28",
+  line: "#232B37",
+  text: "#ECE7DB",
+  muted: "#8B94A3",
+  faint: "#5B6470",
+  gold: "#F5B73D",
+  up: "#46C560",
+  down: "#FB5B47"
 };
 const UNIVERSE = [["AAPL", "Apple", 225], ["MSFT", "Microsoft", 430], ["NVDA", "NVIDIA", 130], ["AMZN", "Amazon", 185], ["GOOGL", "Alphabet", 175], ["META", "Meta", 560], ["TSLA", "Tesla", 250], ["AMD", "Adv. Micro Devices", 155], ["NFLX", "Netflix", 680], ["DIS", "Disney", 95], ["JPM", "JPMorgan Chase", 210], ["V", "Visa", 285], ["WMT", "Walmart", 75], ["KO", "Coca-Cola", 62], ["PEP", "PepsiCo", 170], ["XOM", "Exxon Mobil", 115], ["BA", "Boeing", 175], ["NKE", "Nike", 78], ["SBUX", "Starbucks", 95], ["UBER", "Uber", 72], ["PYPL", "PayPal", 68], ["INTC", "Intel", 22], ["GME", "GameStop", 25], ["AMC", "AMC Ent.", 5], ["SPY", "S&P 500 ETF", 555], ["QQQ", "Nasdaq-100 ETF", 480], ["VOO", "Vanguard S&P 500", 510], ["ARKK", "ARK Innovation ETF", 48], ["DIA", "Dow Jones ETF", 415]];
 const GLOSSARY = [["Long", "Buying an asset because you expect the price to go up. You profit when it rises."], ["Short", "Borrowing shares to sell now and buy back later. You profit when the price falls, and lose if it rises."], ["Buy", "Opening or adding to a position by purchasing shares."], ["Sell", "Closing a position by getting rid of shares you own."], ["Put", "An option that gains value when a stock falls. A bet the price drops."], ["Call", "An option that gains value when a stock rises. A bet the price climbs."], ["Option", "A contract to buy or sell a stock at a set price by a set date, without the obligation to."], ["ETF", "Exchange-Traded Fund. One ticker that holds a basket of stocks, so you buy a whole slice of the market at once (e.g. SPY tracks the S&P 500)."], ["Dividend", "A cash payment some companies send shareholders, usually quarterly, from their profits."], ["Bull market", "A stretch where prices are broadly rising and optimism is high."], ["Bear market", "A stretch where prices are broadly falling, often defined as a 20%+ drop."], ["Portfolio", "The full collection of everything you hold, plus your cash."], ["Diversification", "Spreading money across many assets so one bad pick can't sink you."], ["Market order", "An order to trade right now at whatever the current price is."], ["Limit order", "An order that only fills at a price you set or better."], ["Volatility", "How sharply a price swings. High volatility means bigger, faster moves."], ["P/E ratio", "Price divided by earnings per share. A rough gauge of how expensive a stock is versus its profits."], ["Market cap", "Total value of a company: share price times number of shares."], ["IPO", "Initial Public Offering. The first time a company sells shares to the public."], ["Ticker", "The short symbol that identifies a stock, like AAPL for Apple."], ["Bid / Ask", "The bid is the highest price buyers offer; the ask is the lowest price sellers accept."], ["Spread", "The gap between the bid and the ask price."], ["Margin", "Borrowed money from a broker used to trade a larger position than your cash allows."], ["Leverage", "Using borrowed money to amplify a position. It magnifies both gains and losses."], ["Blue chip", "A large, well-established, financially solid company (think Apple or Coca-Cola)."], ["Index fund", "A fund built to mirror a market index rather than beat it, usually with low fees."], ["Volume", "How many shares changed hands in a period. High volume signals strong interest."], ["Liquidity", "How easily you can buy or sell without moving the price. Cash is the most liquid."], ["Capital gain", "The profit when you sell something for more than you paid."], ["Broker", "The platform or firm that executes your trades (Robinhood, Fidelity, and so on)."]];
@@ -701,7 +711,8 @@ function ConfigNote() {
       fontSize: 22,
       letterSpacing: "0.02em",
       marginBottom: 10
-    }
+    },
+    className: "wordmark"
   }, "THE FLOOR"), /*#__PURE__*/React.createElement("p", {
     style: {
       color: T.muted,
@@ -755,7 +766,8 @@ function Welcome({
       fontWeight: 700,
       fontSize: 30,
       letterSpacing: "0.04em"
-    }
+    },
+    className: "wordmark"
   }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
@@ -845,7 +857,8 @@ function Login({
       fontWeight: 700,
       fontSize: 22,
       letterSpacing: "0.02em"
-    }
+    },
+    className: "wordmark"
   }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
@@ -982,7 +995,8 @@ function TopBar({
       fontWeight: 700,
       letterSpacing: "0.02em",
       lineHeight: 1
-    }
+    },
+    className: "wordmark"
   }, "THE FLOOR"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1174,7 +1188,28 @@ function Market({
     style: {
       paddingTop: 20
     }
-  }, /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "idxrow"
+  }, [["SPY", "S&P 500"], ["DIA", "Dow Jones"], ["QQQ", "Nasdaq"]].map(([sym, label]) => {
+    const ip = prices[sym],
+      io = opens[sym],
+      ich = io ? (ip - io) / io * 100 : 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: sym,
+      className: "idx"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "k"
+    }, label), /*#__PURE__*/React.createElement("div", {
+      className: "v mono"
+    }, ip != null ? price(ip) : "\u2014"), /*#__PURE__*/React.createElement("div", {
+      className: "mono",
+      style: {
+        fontSize: 12,
+        marginTop: 2,
+        color: ich >= 0 ? T.up : T.down
+      }
+    }, pct(ich)));
+  })), /*#__PURE__*/React.createElement("input", {
     value: q,
     onChange: e => {
       setQ(e.target.value);
