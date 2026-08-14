@@ -8,10 +8,10 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-body { background: radial-gradient(1100px 520px at 50% -8%, rgba(245,183,61,0.10), transparent 60%), #0A0D13; font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+body { background: #050506; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }
 .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
 .tab { background: none; border: none; padding: 14px 14px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; margin-bottom: -1px; }
 .primary { background: #F5B73D; color: #12140f; border: none; border-radius: 9px; padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -129,6 +129,33 @@ input:focus { border-color: rgba(245,183,61,0.6) !important; box-shadow: 0 0 0 3
 .view-admin { background: radial-gradient(1100px 620px at 12% -6%, rgba(251,91,71,0.09), transparent 55%); }
 .analytics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 720px) { .analytics { grid-template-columns: 1fr; } }
+
+/* ===== CRISP PASS (kill fog, sharpen edges) ===== */
+body { background:
+  radial-gradient(1000px 520px at 50% -14%, rgba(245,183,61,0.06), transparent 58%),
+  #050506; }
+.app-shell { background: none; transition: none; }
+.mkt-head, .pos-head { background: #141414; backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mkt-row, .pos-row, .lb-row { border-top: 1px solid rgba(255,255,255,0.06); }
+.mkt-row:hover { background: rgba(255,255,255,0.028); }
+.idx { background: #121212; backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 28px rgba(0,0,0,0.42); }
+.mv { background: #121212; backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(255,255,255,0.09); }
+.news-item { background: #121212; backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(255,255,255,0.09); }
+a.news-item:hover { border-color: rgba(245,183,61,0.45); box-shadow: 0 0 0 1px rgba(245,183,61,0.25); }
+.modal { background: #101010; backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 80px rgba(0,0,0,0.7); }
+.overlay { background: rgba(4,6,9,0.66); }
+.toast { background: #141414; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sidebar { background: #0A0A0B; backdrop-filter: none; -webkit-backdrop-filter: none; border-right: 1px solid rgba(255,255,255,0.07); }
+.bottombar { background: #0A0A0B; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.hero { background: linear-gradient(135deg, rgba(245,183,61,0.14), #121212 60%); backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(245,183,61,0.28); box-shadow: 0 0 0 1px rgba(245,183,61,0.06), 0 18px 44px rgba(0,0,0,0.5); }
+/* keep only the sticky top bar frosted (it overlaps content) */
+.ghost { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.12); }
+.mini { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.12); }
+h2 { letter-spacing: 0.01em; }
+
+/* ===== HEADINGS ===== */
+h1, h2 { font-weight: 700; letter-spacing: -0.02em; }
+.wordmark { font-weight: 800; letter-spacing: -0.01em; }
 </style>
 </head>
 <body>
@@ -166,11 +193,11 @@ const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_UR
 }) : null;
 const DEFAULT_CASH = 100000;
 const T = {
-  bg: "#090B10",
-  panel: "rgba(22,28,39,0.58)",
-  panel2: "rgba(30,37,50,0.55)",
-  line: "rgba(255,255,255,0.09)",
-  text: "#ECE7DB",
+  bg: "#050506",
+  panel: "#121212",
+  panel2: "#1A1A1C",
+  line: "rgba(255,255,255,0.10)",
+  text: "#F1ECE1",
   muted: "#8B94A3",
   faint: "#5B6470",
   gold: "#F5B73D",
@@ -729,7 +756,7 @@ function App() {
       fontSize: 13
     }
   }, banner), /*#__PURE__*/React.createElement("div", {
-    className: "app-shell view-" + view
+    className: "app-shell"
   }, /*#__PURE__*/React.createElement(Sidebar, {
     view: view,
     setView: setView,
@@ -1583,10 +1610,8 @@ function Market({
       border: "1px solid " + T.line,
       borderRadius: 14,
       overflow: "hidden",
-      background: "rgba(18,23,32,0.42)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      boxShadow: "0 12px 36px rgba(0,0,0,0.3)",
+      background: "#101010",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1630,10 +1655,8 @@ function Market({
       border: "1px solid " + T.line,
       borderRadius: 14,
       overflow: "hidden",
-      background: "rgba(18,23,32,0.42)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
+      background: "#101010",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "mkt-head"
@@ -1764,10 +1787,8 @@ function Portfolio({
       border: "1px solid " + T.line,
       borderRadius: 14,
       overflow: "hidden",
-      background: "rgba(18,23,32,0.42)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
+      background: "#101010",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "pos-head"
@@ -1836,13 +1857,11 @@ function Stat({
 }) {
   return /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "rgba(20,26,36,0.5)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      border: "1px solid rgba(255,255,255,0.08)",
+      background: "#121212",
+      border: "1px solid rgba(255,255,255,0.10)",
       borderRadius: 14,
       padding: "14px 16px",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.3)"
+      boxShadow: "0 10px 28px rgba(0,0,0,0.38)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1889,10 +1908,8 @@ function Leaderboard({
       border: "1px solid " + T.line,
       borderRadius: 14,
       overflow: "hidden",
-      background: "rgba(18,23,32,0.42)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      boxShadow: "0 12px 36px rgba(0,0,0,0.3)"
+      background: "#101010",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
     }
   }, board.map((r, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
@@ -2591,14 +2608,12 @@ const inputStyle = {
   width: "100%",
   marginTop: 8,
   padding: "12px 14px",
-  background: "rgba(255,255,255,0.045)",
+  background: "#0C0C0C",
   color: T.text,
-  border: "1px solid rgba(255,255,255,0.10)",
+  border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: 11,
   fontSize: 15,
-  outline: "none",
-  backdropFilter: "blur(6px)",
-  WebkitBackdropFilter: "blur(6px)"
+  outline: "none"
 };
 const secH = {
   fontSize: 15,
@@ -2609,9 +2624,7 @@ const secH = {
 };
 const empty = {
   color: T.muted,
-  background: "rgba(20,26,36,0.40)",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
+  background: "#101010",
   border: "1px dashed rgba(255,255,255,0.12)",
   borderRadius: 14,
   padding: "26px 20px",
@@ -2619,14 +2632,12 @@ const empty = {
   fontSize: 14
 };
 const cardBox = {
-  background: "rgba(20,26,36,0.5)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#121212",
+  border: "1px solid rgba(255,255,255,0.10)",
   borderRadius: 14,
   padding: "16px 18px",
   marginBottom: 14,
-  boxShadow: "0 12px 36px rgba(0,0,0,0.34)"
+  boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.4)"
 };
 const cardTitle = {
   fontWeight: 600,
