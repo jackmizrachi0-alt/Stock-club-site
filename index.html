@@ -81,7 +81,7 @@ const RELAY_URL = "https://stock-club-relay.onrender.com";
  * app's code. Your database is protected by the security rules (RLS).
  * Paste your anon public key between the quotes below.               */
 const SUPABASE_URL = "https://ypsttcyxmoedumfjtsfo.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlwc3R0Y3l4bW9lZHVtZmp0c2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2Mzk4MTIsImV4cCI6MjEwMjIxNTgxMn0.Oe5xUszFI40Crr_40Aletw13R93F0tmiJVoLTsWd1Eo";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
 const sbReady = SUPABASE_ANON_KEY.indexOf("PASTE_") === -1;
 const sb = sbReady && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const DEFAULT_CASH = 100000;
@@ -152,6 +152,8 @@ function App() {
   const [board, setBoard] = useState([]);
   const [news, setNews] = useState(SAMPLE_NEWS);
   const [lookups, setLookups] = useState([]);
+  const [allowShorting, setAllowShorting] = useState(true);
+  const [adminPlayers, setAdminPlayers] = useState([]);
   const [toast, setToast] = useState(null);
   const [banner, setBanner] = useState("");
   const pfRef = useRef(pf),
@@ -320,6 +322,7 @@ function App() {
       const cash0 = s ? Number(s.starting_cash) : DEFAULT_CASH;
       setRound(rnd);
       setStartCash(cash0);
+      setAllowShorting(s ? s.allow_shorting : true);
       const player = await ensurePlayer(u);
       setMe(player);
       const p = await loadPortfolio(u, rnd, cash0);
@@ -405,6 +408,7 @@ function App() {
   const openPosition = async (symbol, side, shares) => {
     const p = prices[symbol];
     const notional = shares * p;
+    if (side === "short" && !allowShorting) return flashToast("Shorting is turned off for this club.", false);
     const next = Object.assign({}, pf, {
       positions: (pf.positions || []).map(x => Object.assign({}, x))
     });
@@ -484,6 +488,61 @@ function App() {
       };
     }
   };
+  const loadAdminPlayers = useCallback(async () => {
+    if (!sb) return;
+    try {
+      const {
+        data
+      } = await sb.from("players").select("id, name, is_admin");
+      setAdminPlayers(data || []);
+    } catch (e) {}
+  }, []);
+  const resetRound = async () => {
+    if (!sb || !user) return;
+    const newRound = round + 1;
+    try {
+      await sb.from("rounds").update({
+        ended_at: new Date().toISOString()
+      }).eq("round", round);
+      await sb.from("rounds").insert({
+        round: newRound
+      });
+      await sb.from("settings").update({
+        active_round: newRound
+      }).eq("id", 1);
+      setRound(newRound);
+      const p = await loadPortfolio(user, newRound, startCash);
+      setPf(p);
+      pfRef.current = p;
+      flashToast("New round started \u2014 tell players to refresh");
+    } catch (e) {
+      flashToast("Couldn't start a new round.", false);
+    }
+  };
+  const saveSettings = async (newCash, newShort) => {
+    if (!sb) return;
+    try {
+      await sb.from("settings").update({
+        starting_cash: newCash,
+        allow_shorting: newShort
+      }).eq("id", 1);
+      setStartCash(newCash);
+      setAllowShorting(newShort);
+      flashToast("Rules saved");
+    } catch (e) {
+      flashToast("Couldn't save rules.", false);
+    }
+  };
+  const removePlayer = async pid => {
+    if (!sb) return;
+    try {
+      await sb.from("players").delete().eq("id", pid);
+      loadAdminPlayers();
+      flashToast("Player removed");
+    } catch (e) {
+      flashToast("Couldn't remove that player.", false);
+    }
+  };
   const loadBoard = useCallback(async () => {
     if (!sb) return;
     try {
@@ -520,7 +579,7 @@ function App() {
       color: T.muted,
       padding: 40
     }
-  }, "Loading the floor\\u2026"));
+  }, "Loading the floor…"));
   if (!user) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Login, {
     onSend: sendMagicLink
   }));
@@ -542,7 +601,8 @@ function App() {
     onSignOut: signOut
   }), /*#__PURE__*/React.createElement(Nav, {
     view: view,
-    setView: setView
+    setView: setView,
+    isAdmin: me && me.is_admin
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       maxWidth: 1040,
@@ -555,7 +615,8 @@ function App() {
     flash: flash,
     onTrade: setTrade,
     onLookup: lookupTicker,
-    lookups: lookups
+    lookups: lookups,
+    allowShorting: allowShorting
   }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
     pf: pf,
     prices: prices,
@@ -570,7 +631,17 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null)), trade && /*#__PURE__*/React.createElement(TradeModal, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "admin" && me && me.is_admin && /*#__PURE__*/React.createElement(Admin, {
+    startCash: startCash,
+    allowShorting: allowShorting,
+    round: round,
+    players: adminPlayers,
+    onResetRound: resetRound,
+    onSaveSettings: saveSettings,
+    onRemovePlayer: removePlayer,
+    onReloadPlayers: loadAdminPlayers,
+    meId: user.id
+  })), trade && /*#__PURE__*/React.createElement(TradeModal, {
     trade: trade,
     prices: prices,
     pf: pf,
@@ -676,7 +747,7 @@ function Login({
       fontFamily: "'JetBrains Mono', monospace",
       fontSize: 20
     }
-  }, "\\u25b2"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 22,
@@ -813,7 +884,7 @@ function TopBar({
       fontWeight: 700,
       fontFamily: "'JetBrains Mono', monospace"
     }
-  }, "\\u25b2"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "▲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       letterSpacing: "0.02em",
@@ -897,9 +968,11 @@ function TopBar({
 }
 function Nav({
   view,
-  setView
+  setView,
+  isAdmin
 }) {
   const tabs = [["market", "Market"], ["portfolio", "Portfolio"], ["leaderboard", "Leaderboard"], ["news", "News"], ["learn", "Learn"]];
+  if (isAdmin) tabs.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       borderBottom: "1px solid " + T.line,
@@ -934,7 +1007,8 @@ function Market({
   flash,
   onTrade,
   onLookup,
-  lookups
+  lookups,
+  allowShorting
 }) {
   const [q, setQ] = useState("");
   const [looking, setLooking] = useState(false);
@@ -995,7 +1069,7 @@ function Market({
         symbol: s,
         side: "long"
       })
-    }, "Buy"), /*#__PURE__*/React.createElement("button", {
+    }, "Buy"), allowShorting && /*#__PURE__*/React.createElement("button", {
       className: "mini short",
       onClick: () => onTrade({
         symbol: s,
@@ -1373,7 +1447,7 @@ function NewsItem({
       fontSize: 11,
       color: T.faint
     }
-  }, "\\u00b7 ", ago(n.datetime))), /*#__PURE__*/React.createElement("div", {
+  }, "· ", ago(n.datetime))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 15,
@@ -1489,7 +1563,7 @@ function TradeModal({
   }, name)), /*#__PURE__*/React.createElement("button", {
     className: "x",
     onClick: onClose
-  }, "\\u00d7")), /*#__PURE__*/React.createElement("div", {
+  }, "×")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -1602,6 +1676,152 @@ const empty = {
   textAlign: "center",
   fontSize: 14
 };
+const cardBox = {
+  background: T.panel,
+  border: "1px solid " + T.line,
+  borderRadius: 12,
+  padding: "16px 18px",
+  marginBottom: 14
+};
+const cardTitle = {
+  fontWeight: 600,
+  marginBottom: 12,
+  fontSize: 14
+};
+function Admin({
+  startCash,
+  allowShorting,
+  round,
+  players,
+  onResetRound,
+  onSaveSettings,
+  onRemovePlayer,
+  onReloadPlayers,
+  meId
+}) {
+  const [cash, setCash] = useState(String(startCash));
+  const [short, setShort] = useState(allowShorting);
+  const [confirmReset, setConfirmReset] = useState(false);
+  useEffect(() => {
+    onReloadPlayers();
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Admin"), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "Club rules"), /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.06em"
+    }
+  }, "STARTING CASH (applies to new rounds)"), /*#__PURE__*/React.createElement("input", {
+    value: cash,
+    onChange: e => setCash(e.target.value.replace(/[^0-9]/g, "")),
+    style: inputStyle
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, "Allow shorting"), /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    onClick: () => setShort(!short),
+    style: {
+      color: short ? T.up : T.muted,
+      borderColor: short ? T.up : T.line
+    }
+  }, short ? "On" : "Off")), /*#__PURE__*/React.createElement("button", {
+    className: "primary",
+    style: {
+      marginTop: 16
+    },
+    onClick: () => onSaveSettings(Number(cash) || startCash, short)
+  }, "Save rules")), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "Competition"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.muted,
+      fontSize: 13,
+      lineHeight: 1.55,
+      marginTop: 0
+    }
+  }, "Current round: ", /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.text
+    }
+  }, round), ". Starting a new round gives everyone a fresh ", money(startCash), " and archives the current standings. Ask players to refresh after."), !confirmReset ? /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    onClick: () => setConfirmReset(true)
+  }, "Start a new round") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "primary",
+    style: {
+      background: T.down,
+      color: "#0c0f0a"
+    },
+    onClick: onResetRound
+  }, "Yes, reset everyone"), /*#__PURE__*/React.createElement("button", {
+    className: "ghost",
+    onClick: () => setConfirmReset(false)
+  }, "Cancel"))), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "Players (", players.length, ")"), players.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, "No players yet."), players.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "10px 0",
+      borderTop: "1px solid " + T.line
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, p.name, p.is_admin && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.gold,
+      fontSize: 11,
+      marginLeft: 8
+    }
+  }, "ADMIN"), p.id === meId && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.faint,
+      fontSize: 11,
+      marginLeft: 8
+    }
+  }, "you")), p.id !== meId && /*#__PURE__*/React.createElement("button", {
+    className: "mini close",
+    onClick: () => onRemovePlayer(p.id)
+  }, "Remove")))));
+}
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
