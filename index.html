@@ -406,6 +406,7 @@ function App() {
   const [detailSymbol, setDetailSymbol] = useState(null);
   const [allowShorting, setAllowShorting] = useState(true);
   const [adminPlayers, setAdminPlayers] = useState([]);
+  const [trades, setTradesList] = useState([]);
   const [toast, setToast] = useState(null);
   const [banner, setBanner] = useState("");
   const pfRef = useRef(pf),
@@ -814,6 +815,20 @@ function App() {
       flashToast("Couldn't remove that player.", false);
     }
   };
+  const loadTrades = useCallback(async () => {
+    if (!sb || !user) return;
+    try {
+      const {
+        data
+      } = await sb.from("trades").select("*").eq("player_id", user.id).order("created_at", {
+        ascending: false
+      }).limit(100);
+      setTradesList(data || []);
+    } catch (e) {}
+  }, [user]);
+  useEffect(() => {
+    if (view === "trades") loadTrades();
+  }, [view, loadTrades]);
   const loadBoard = useCallback(async () => {
     if (!sb) return;
     try {
@@ -910,7 +925,9 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
+    trades: trades
+  }), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
     symbol: detailSymbol,
     prices: prices,
     opens: opens,
@@ -924,7 +941,8 @@ function App() {
     onSaveSettings: saveSettings,
     onRemovePlayer: removePlayer,
     onReloadPlayers: loadAdminPlayers,
-    meId: user.id
+    meId: user.id,
+    sb: sb
   })))), /*#__PURE__*/React.createElement(BottomBar, {
     view: view,
     setView: setView,
@@ -1390,6 +1408,11 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M8 9h8M8 13h8M8 17h5"
     })),
+    trades: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+      d: "M4 4h13l3 3v13H4z"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M8 10h8M8 14h8M8 18h5"
+    })),
     learn: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
       d: "M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"
     }), /*#__PURE__*/React.createElement("path", {
@@ -1423,7 +1446,7 @@ function Sidebar({
   me,
   onSignOut
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["trades", "Trades"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "sidebar"
@@ -1494,7 +1517,7 @@ function BottomBar({
   setView,
   isAdmin
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["trades", "Trades"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "bottombar"
@@ -2679,6 +2702,8 @@ function TradeModal({
   const nameRow = UNIVERSE.find(u => u[0] === symbol);
   const name = nameRow ? nameRow[1] : symbol;
   const buy = side === "long";
+  const overCash = buy && notional > pf.cash;
+  const blocked = shares < 1 || overCash;
   return /*#__PURE__*/React.createElement("div", {
     className: "overlay",
     onClick: onClose
@@ -2771,20 +2796,96 @@ function TradeModal({
   }, "Cash available"), /*#__PURE__*/React.createElement("span", {
     className: "mono",
     style: {
-      color: T.muted
+      color: overCash ? T.down : T.muted
     }
-  }, money(pf.cash))), /*#__PURE__*/React.createElement("button", {
+  }, money(pf.cash))), overCash && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.down,
+      fontSize: 13,
+      marginTop: 10
+    }
+  }, "Not enough cash — you're short ", money(notional - pf.cash), ". Max you can buy: ", Math.floor(pf.cash / p), " shares."), /*#__PURE__*/React.createElement("button", {
     className: "primary",
-    disabled: shares < 1,
+    disabled: blocked,
     style: {
       width: "100%",
       marginTop: 20,
-      opacity: shares < 1 ? 0.4 : 1,
+      opacity: blocked ? 0.4 : 1,
       background: buy ? T.up : T.down,
       color: "#0c0f0a"
     },
-    onClick: () => onConfirm(symbol, side, shares)
-  }, (buy ? "Buy " : "Short ") + (shares || "") + " " + symbol)));
+    onClick: () => !blocked && onConfirm(symbol, side, shares)
+  }, overCash ? "Not enough cash" : (buy ? "Buy " : "Short ") + (shares || "") + " " + symbol)));
+}
+function Trades({
+  trades
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Trade history"), !trades || trades.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "No trades yet. Your buys, sells, and shorts will show up here.") : /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, trades.map((t, i) => {
+    const isOpen = t.action === "open";
+    const label = t.side === "long" ? isOpen ? "BOUGHT" : "SOLD" : isOpen ? "SHORTED" : "COVERED";
+    const col = t.side === "long" ? isOpen ? T.up : T.muted : isOpen ? T.down : T.muted;
+    const d = t.created_at ? new Date(t.created_at) : null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: t.id || i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "13px 16px",
+        borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        color: col,
+        width: 62
+      }
+    }, label), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        fontWeight: 600,
+        width: 64
+      }
+    }, t.symbol), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        color: T.muted,
+        fontSize: 13
+      }
+    }, t.shares, " @ ", price(Number(t.price))), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        marginLeft: "auto",
+        fontSize: 13
+      }
+    }, money(Number(t.shares) * Number(t.price))), d && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.faint,
+        fontSize: 11,
+        width: 96,
+        textAlign: "right"
+      }
+    }, d.toLocaleDateString(), " ", d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    })));
+  })));
 }
 function Toast({
   toast
@@ -2850,14 +2951,31 @@ function Admin({
   onSaveSettings,
   onRemovePlayer,
   onReloadPlayers,
-  meId
+  meId,
+  sb
 }) {
   const [cash, setCash] = useState(String(startCash));
   const [short, setShort] = useState(allowShorting);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [book, setBook] = useState([]);
   useEffect(() => {
     onReloadPlayers();
   }, []);
+  useEffect(() => {
+    if (!sb) return;
+    let alive = true;
+    (async () => {
+      try {
+        const {
+          data
+        } = await sb.from("portfolios").select("player_id, positions, cash, players(name)").eq("round", round);
+        if (alive) setBook(data || []);
+      } catch (e) {}
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [sb, round]);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       paddingTop: 20
@@ -2937,6 +3055,71 @@ function Admin({
     className: "ghost",
     onClick: () => setConfirmReset(false)
   }, "Cancel"))), /*#__PURE__*/React.createElement("div", {
+    style: cardBox
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "Everyone's positions"), book.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 13
+    }
+  }, "No players with holdings yet."), book.map(b => {
+    const name = b.players && b.players.name || "player";
+    const pos = b.positions || [];
+    return /*#__PURE__*/React.createElement("div", {
+      key: b.player_id,
+      style: {
+        padding: "10px 0",
+        borderTop: "1px solid rgba(255,255,255,0.06)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontSize: 14
+      }
+    }, name), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        color: T.muted,
+        fontSize: 12
+      }
+    }, "cash ", money(Number(b.cash)))), pos.length === 0 ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.faint,
+        fontSize: 12
+      }
+    }, "no open positions") : /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6
+      }
+    }, pos.map((p, i) => /*#__PURE__*/React.createElement("span", {
+      key: i,
+      style: {
+        fontSize: 12,
+        padding: "3px 8px",
+        borderRadius: 6,
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.1)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "mono",
+      style: {
+        fontWeight: 600
+      }
+    }, p.symbol), " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: p.side === "long" ? T.up : T.down
+      }
+    }, p.side === "long" ? "" : "S", p.shares)))));
+  })), /*#__PURE__*/React.createElement("div", {
     style: cardBox
   }, /*#__PURE__*/React.createElement("div", {
     style: cardTitle
