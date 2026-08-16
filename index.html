@@ -949,19 +949,6 @@ function App() {
   }, [view, user, loadBoard]);
 
   /* ---- render ---- */
-  if (!sb) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(ConfigNote, null));
-  if (!authed) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: T.muted,
-      padding: 40
-    }
-  }, "Loading the floor…"));
-  if (!user) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Login, {
-    onSend: sendMagicLink
-  }));
-  if (showWelcome) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Welcome, {
-    onEnter: dismissWelcome
-  }));
   useEffect(() => {
     if (!sb || !user) return;
     const spx = prices && prices.SPY;
@@ -988,6 +975,19 @@ function App() {
       } catch (e) {}
     })();
   }, [prices, user, round, valHist]);
+  if (!sb) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(ConfigNote, null));
+  if (!authed) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      padding: 40
+    }
+  }, "Loading the floor…"));
+  if (!user) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Login, {
+    onSend: sendMagicLink
+  }));
+  if (showWelcome) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Welcome, {
+    onEnter: dismissWelcome
+  }));
   const val = accountValue(pf, prices);
   const ret = startCash ? (val - startCash) / startCash * 100 : 0;
   return /*#__PURE__*/React.createElement(Shell, null, banner && /*#__PURE__*/React.createElement("div", {
