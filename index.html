@@ -268,6 +268,77 @@ body { background:
 .display { text-shadow: 0 0 40px rgba(245,183,61,0.35) !important; }
 /* progress bars pop with glow */
 .content [style*="borderRadius: 5"] > div { box-shadow: 0 0 12px currentColor; }
+/* ===== Time Machine (scoped) ===== */
+.tm-root{ --tmup:#3FB950; --tmdown:#F0523E; --tmgold:#F5B843; --tmmuted:#9a97a3; --tmfaint:#5f5c68; --tmtext:#F4F1EA; --tmline:rgba(255,255,255,0.10);
+  color:var(--tmtext); font-family:'Inter',system-ui,sans-serif; padding-bottom:96px; max-width:720px; margin:0 auto; }
+.tm-root .mono{ font-family:'JetBrains Mono',monospace; }
+.tm-topbar{ display:flex; align-items:center; gap:11px; padding:2px 2px 14px; }
+.tm-logo{ width:40px;height:40px;border-radius:11px;background:linear-gradient(150deg,#F5B843,#e79a2b);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 22px rgba(245,184,67,0.5); }
+.tm-logo svg{ width:20px;height:20px; }
+.tm-brand{ font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;letter-spacing:0.02em;line-height:1; }
+.tm-sub{ font-size:11px;color:var(--tmmuted);letter-spacing:0.13em;margin-top:3px; }
+.tm-card{ position:relative;border-radius:18px;padding:1.4px;background:linear-gradient(140deg,rgba(245,184,67,0.55),rgba(139,92,246,0.5) 45%,rgba(76,155,245,0.5));margin-bottom:13px;box-shadow:0 14px 40px rgba(0,0,0,0.5); }
+.tm-inner{ border-radius:16.6px;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0) 40%),#0b0a0d;position:relative;overflow:hidden; }
+.tm-inner::before{ content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent); }
+.tm-lbl{ font-size:11px;letter-spacing:0.15em;color:var(--tmmuted);text-transform:uppercase; }
+.tm-h2{ font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;margin:8px 0 2px; }
+.tm-p{ color:var(--tmmuted);font-size:13.5px;line-height:1.55;margin:8px 0 0; }
+.tm-big{ font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:44px;line-height:1.02;margin:6px 0 4px;text-shadow:0 0 34px rgba(245,184,67,0.25); }
+.tm-delta{ font-size:15px;font-weight:600; }
+.tm-up{ color:var(--tmup); } .tm-down{ color:var(--tmdown); }
+.tm-row2{ display:grid;grid-template-columns:1fr 1fr;gap:11px; }
+.tm-mini .tm-v{ font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;margin-top:5px; }
+.tm-chip{ display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--tmline);margin-top:12px; }
+.tm-chip.tm-win{ color:var(--tmup);border-color:rgba(63,185,80,0.4);background:rgba(63,185,80,0.08); }
+.tm-chip.tm-lose{ color:var(--tmdown);border-color:rgba(240,82,62,0.4);background:rgba(240,82,62,0.08); }
+.tm-legend{ display:flex;gap:16px;margin-top:6px;font-size:11.5px;color:var(--tmmuted); }
+.tm-sect{ font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;margin:22px 2px 11px;position:relative;display:inline-block; }
+.tm-sect::after{ content:"";position:absolute;left:0;right:0;bottom:-5px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--tmgold),#8B5CF6);box-shadow:0 0 10px rgba(139,92,246,0.6); }
+.tm-headline{ font-size:13.5px;line-height:1.5;color:#e9e6de;padding:12px 14px;border-radius:13px;background:rgba(245,184,67,0.07);border:1px solid rgba(245,184,67,0.22);margin-bottom:6px; }
+.tm-headline b{ color:var(--tmgold); }
+.tm-stock{ display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,0.06); }
+.tm-stock:last-child{ border-bottom:none; }
+.tm-sname{ min-width:0; }
+.tm-sname .tm-t{ font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px; }
+.tm-sname .tm-n{ font-size:11.5px;color:var(--tmmuted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px; }
+.tm-spx{ margin-left:auto;text-align:right; }
+.tm-spx .tm-pp{ font-family:'JetBrains Mono',monospace;font-size:14.5px;font-weight:600; }
+.tm-spx .tm-c{ font-size:11.5px;font-weight:600; }
+.tm-hold{ font-size:11px;color:#4C9BF5;margin-top:2px; }
+.tm-acts{ display:flex;gap:6px;margin-left:6px; }
+.tm-mini-btn{ font-size:12px;font-weight:700;padding:7px 12px;border-radius:9px;border:none;cursor:pointer; }
+.tm-buy{ background:rgba(63,185,80,0.14);color:var(--tmup);border:1px solid rgba(63,185,80,0.35); }
+.tm-sell{ background:rgba(240,82,62,0.12);color:var(--tmdown);border:1px solid rgba(240,82,62,0.32); }
+.tm-sell:disabled{ opacity:0.32;cursor:default; }
+.tm-dock{ display:flex;gap:10px;margin:18px 0 4px; }
+.tm-adv{ flex:1;border:none;cursor:pointer;border-radius:13px;padding:15px 12px;font-weight:700;font-size:15px;font-family:'Inter',sans-serif;color:#140f04;background:linear-gradient(120deg,#F5B843,#f0a52f);box-shadow:0 0 26px rgba(245,184,67,0.4); }
+.tm-adv.tm-ghost{ flex:0 0 auto;background:#141217;color:var(--tmtext);border:1px solid var(--tmline);box-shadow:none;padding:15px 16px; }
+.tm-track{ height:6px;border-radius:6px;background:rgba(255,255,255,0.08);overflow:hidden;margin:14px 2px 2px; }
+.tm-fill{ height:100%;border-radius:6px;background:linear-gradient(90deg,var(--tmgold),#8B5CF6,#4C9BF5);box-shadow:0 0 12px rgba(139,92,246,0.6); }
+.tm-trackrow{ display:flex;justify-content:space-between;font-size:11px;color:var(--tmfaint);margin-top:6px;letter-spacing:0.04em; }
+.tm-overlay{ position:fixed;inset:0;background:rgba(4,3,6,0.82);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:22px;z-index:200; }
+.tm-modal{ width:100%;max-width:400px;border-radius:20px;padding:1.5px;background:linear-gradient(140deg,rgba(245,184,67,0.6),rgba(139,92,246,0.55),rgba(76,155,245,0.55));box-shadow:0 24px 70px rgba(0,0,0,0.6); }
+.tm-modal-inr{ background:#0b0a0d;border-radius:18.5px;padding:22px 20px; }
+.tm-input{ width:100%;margin-top:14px;padding:13px 14px;background:#050406;color:var(--tmtext);border:1px solid rgba(255,255,255,0.14);border-radius:12px;font-size:17px;outline:none;font-family:'JetBrains Mono',monospace; }
+.tm-maxrow{ display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12.5px;color:var(--tmmuted); }
+.tm-maxbtn{ background:rgba(76,155,245,0.14);color:#4C9BF5;border:1px solid rgba(76,155,245,0.35);padding:6px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer; }
+.tm-primary{ width:100%;margin-top:18px;padding:14px;border:none;border-radius:13px;font-weight:700;font-size:15px;cursor:pointer;color:#140f04;background:linear-gradient(120deg,#F5B843,#f0a52f); }
+.tm-primary:disabled{ opacity:0.4;cursor:default; }
+.tm-x{ background:none;border:none;color:var(--tmmuted);font-size:26px;line-height:1;cursor:pointer;padding:0; }
+.tm-pick{ display:block;width:100%;text-align:left;cursor:pointer;margin-bottom:12px;padding:16px;border-radius:15px;background:#0d0c10;border:1px solid rgba(255,255,255,0.12);transition:border-color .15s,transform .1s; }
+.tm-pick:active{ transform:scale(0.99); } .tm-pick:hover{ border-color:rgba(245,184,67,0.5); }
+.tm-pick-top{ display:flex;justify-content:space-between;align-items:baseline;gap:10px; }
+.tm-pick-title{ font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px; }
+.tm-pick-tag{ font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--tmgold);white-space:nowrap; }
+.tm-pick-blurb{ font-size:13px;color:var(--tmmuted);line-height:1.5;margin-top:7px; }
+.tm-pick-meta{ font-size:11.5px;color:var(--tmfaint);margin-top:9px;font-family:'JetBrains Mono',monospace; }
+.tm-back{ background:none;border:none;color:var(--tmmuted);font-size:13px;cursor:pointer;padding:0;margin-bottom:12px;display:block; }
+.tm-startlist{ list-style:none;padding:0;margin:16px 0 0; }
+.tm-startlist li{ display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#ddd9d0;margin-bottom:10px;line-height:1.45; }
+.tm-dot{ color:var(--tmgold);font-weight:700; }
+.tm-note{ font-size:11px;color:var(--tmfaint);margin-top:16px;line-height:1.5; }
+.tm-verdict{ font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;margin-top:14px; }
+
 </style>
 </head>
 <body>
@@ -925,7 +996,7 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
     trades: trades
   }), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
     symbol: detailSymbol,
@@ -1413,6 +1484,15 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M8 10h8M8 14h8M8 18h5"
     })),
+    timemachine: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "9"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M12 7v5l3 2"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M3 12a9 9 0 0 1 3-6.7"
+    })),
     learn: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
       d: "M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"
     }), /*#__PURE__*/React.createElement("path", {
@@ -1446,7 +1526,7 @@ function Sidebar({
   me,
   onSignOut
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["trades", "Trades"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["trades", "Trades"], ["timemachine", "Time Machine"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "sidebar"
@@ -1517,7 +1597,7 @@ function BottomBar({
   setView,
   isAdmin
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["trades", "Trades"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["trades", "Trades"], ["timemachine", "Time"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "bottombar"
@@ -3157,6 +3237,753 @@ function Admin({
     className: "mini close",
     onClick: () => onRemovePlayer(p.id)
   }, "Remove")))));
+}
+const TM_SC_2008 = {
+  id: "2008",
+  title: "2008 Financial Crisis",
+  tag: "2007 – 2010",
+  start: "June 2007",
+  blurb: "Start near the market top and trade through the worst crash since 1929. Banks nearly collapse; the recovery is slow and uneven.",
+  labels: ["2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12"],
+  sp: [1514.19, 1520.71, 1454.62, 1497.12, 1539.66, 1463.39, 1479.22, 1378.76, 1354.87, 1316.94, 1370.47, 1403.22, 1341.25, 1257.33, 1281.47, 1216.95, 968.8, 883.04, 877.56, 865.58, 805.23, 757.13, 848.15, 902.41, 926.12, 935.82, 1009.73, 1044.55, 1067.66, 1088.07, 1110.38, 1123.58, 1089.16, 1152.05, 1197.32, 1125.06, 1083.36, 1079.8, 1087.28, 1122.08, 1171.58, 1198.89, 1241.53],
+  stocks: [{
+    sym: "AAPL",
+    name: "Apple",
+    px: [17.43, 18.82, 19.78, 21.92, 27.14, 26.03, 28.3, 19.34, 17.86, 20.5, 24.85, 26.96, 23.92, 22.71, 24.22, 16.24, 15.37, 13.24, 12.19, 12.88, 12.76, 15.02, 17.98, 19.4, 20.35, 23.34, 24.03, 26.48, 26.93, 28.56, 30.1, 27.44, 29.23, 33.57, 37.3, 36.7, 35.93, 36.75, 34.73, 40.54, 43.0, 44.45, 46.08]
+  }, {
+    sym: "GS",
+    name: "Goldman Sachs",
+    px: [216.75, 188.34, 176.01, 216.74, 247.92, 226.64, 215.05, 199.55, 169.63, 165.39, 191.37, 176.41, 174.9, 184.04, 163.97, 128.0, 92.5, 78.99, 84.39, 80.73, 91.08, 106.02, 128.5, 144.57, 147.44, 163.3, 165.46, 184.35, 170.17, 169.66, 168.84, 148.72, 156.35, 170.63, 145.2, 144.26, 131.27, 150.82, 136.63, 144.58, 161.13, 156.14, 168.16]
+  }, {
+    sym: "JPM",
+    name: "JPMorgan Chase",
+    px: [48.45, 44.01, 44.52, 45.82, 47.0, 45.62, 43.65, 47.4, 40.65, 42.95, 47.65, 43.0, 34.31, 40.63, 38.49, 46.7, 41.25, 31.66, 31.53, 25.51, 22.85, 26.58, 33.0, 36.9, 34.11, 38.65, 43.46, 43.82, 41.77, 42.49, 41.67, 38.94, 41.97, 44.75, 42.58, 39.58, 36.61, 40.28, 36.26, 38.06, 37.63, 37.4, 42.42]
+  }, {
+    sym: "GE",
+    name: "General Electric",
+    px: [38.28, 38.76, 38.87, 41.4, 41.16, 38.29, 37.07, 35.36, 33.14, 37.01, 32.7, 30.72, 26.69, 28.29, 28.1, 25.5, 19.51, 17.17, 16.2, 12.13, 8.51, 10.11, 12.65, 13.48, 11.72, 13.4, 13.9, 16.42, 14.26, 16.02, 15.13, 16.08, 16.06, 18.2, 18.86, 16.35, 14.42, 16.12, 14.43, 16.25, 16.02, 15.83, 18.29]
+  }, {
+    sym: "AMZN",
+    name: "Amazon",
+    px: [68.41, 78.54, 79.91, 93.15, 89.15, 90.56, 92.64, 77.7, 64.47, 71.3, 78.63, 81.62, 73.33, 76.34, 80.81, 72.76, 57.24, 42.7, 51.28, 58.82, 64.79, 73.44, 80.52, 77.99, 83.66, 85.76, 81.19, 93.36, 118.81, 135.91, 134.52, 125.41, 118.4, 135.77, 137.1, 125.46, 109.26, 117.89, 124.83, 157.06, 165.23, 175.4, 180.0]
+  }, {
+    sym: "MSFT",
+    name: "Microsoft",
+    px: [29.47, 28.99, 28.73, 29.46, 36.81, 33.6, 35.6, 32.6, 27.2, 28.38, 28.52, 28.32, 27.51, 25.72, 27.29, 26.69, 22.33, 20.22, 19.44, 17.1, 16.15, 18.37, 20.26, 20.89, 23.77, 23.52, 24.65, 25.72, 27.73, 29.41, 30.48, 28.18, 28.67, 29.29, 30.54, 25.8, 23.01, 25.81, 23.46, 24.49, 26.66, 25.26, 27.91]
+  }, {
+    sym: "CAT",
+    name: "Caterpillar",
+    px: [78.3, 78.8, 75.77, 78.43, 74.61, 71.9, 72.56, 70.99, 72.33, 78.29, 81.88, 82.64, 73.82, 69.52, 70.73, 59.6, 38.2, 40.99, 44.67, 30.85, 24.61, 27.96, 35.58, 35.46, 33.04, 44.06, 45.31, 51.33, 55.06, 58.39, 56.99, 52.24, 57.05, 62.85, 68.09, 60.76, 60.07, 69.75, 65.16, 78.68, 78.6, 84.6, 93.66]
+  }, {
+    sym: "KO",
+    name: "Coca-Cola",
+    px: [26.16, 26.06, 26.89, 28.74, 30.88, 31.05, 30.68, 29.5, 29.23, 30.44, 29.44, 28.63, 25.99, 25.75, 26.04, 26.44, 22.03, 23.44, 22.64, 21.36, 20.42, 21.98, 21.52, 24.58, 24.0, 24.92, 24.38, 26.85, 26.66, 28.6, 28.5, 27.12, 26.36, 27.5, 26.72, 25.7, 25.06, 27.56, 27.91, 29.26, 30.66, 31.58, 32.88]
+  }, {
+    sym: "DIS",
+    name: "Disney",
+    px: [34.14, 33.0, 33.6, 34.39, 34.63, 33.15, 32.28, 29.84, 32.41, 31.38, 32.43, 33.6, 31.2, 30.35, 32.35, 30.69, 25.91, 22.52, 22.69, 20.68, 16.77, 18.16, 21.9, 24.22, 23.33, 25.12, 26.04, 27.46, 27.37, 30.22, 32.25, 29.55, 31.24, 34.91, 36.84, 33.42, 31.5, 33.69, 32.54, 33.1, 36.12, 36.51, 37.51]
+  }],
+  headlines: {
+    "2007-06": "It's June 2007. Markets are near all-time highs and the economy looks strong. You have <b>$10,000</b>.",
+    "2007-10": "The S&P 500 hits a <b>record high</b> above 1,540. Few see what's coming.",
+    "2008-01": "Cracks appear. Banks start reporting massive <b>subprime mortgage losses</b>.",
+    "2008-03": "<b>Bear Stearns collapses</b> and is sold to JPMorgan for $2 a share in an emergency rescue.",
+    "2008-07": "Fear spreads to <b>Fannie Mae and Freddie Mac</b> as housing keeps falling.",
+    "2008-09": "<b>Lehman Brothers files for bankruptcy.</b> AIG is bailed out. Global panic sets in.",
+    "2008-10": "Congress passes the <b>$700 billion TARP bailout</b> — and the market crashes anyway.",
+    "2008-11": "The selloff deepens. Automakers and banks teeter on the edge.",
+    "2009-03": "<b>The bottom.</b> The S&P touches 666 intraday — its lowest in 13 years — then turns up.",
+    "2009-04": "<b>A historic rally begins.</b> 'Green shoots' of recovery appear.",
+    "2009-09": "Markets have roared back. The recovery is real, if uneven.",
+    "2010-05": "The <b>Flash Crash</b>: the Dow briefly plunges nearly 1,000 points in minutes.",
+    "2010-12": "December 2010. You've traded through the worst financial crisis since 1929."
+  }
+};
+const TM_SC_COVID = {
+  id: "covid",
+  title: "2020 COVID Crash",
+  tag: "2019 – 2020",
+  start: "Nov 2019",
+  blurb: "Late 2019, record highs. Then the fastest crash in history in March 2020, followed by a historic tech boom that left some stocks behind.",
+  labels: ["2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12"],
+  sp: [3104.9, 3176.75, 3278.2, 3277.31, 2652.39, 2761.98, 2919.61, 3104.66, 3207.62, 3391.71, 3365.52, 3418.7, 3548.99, 3695.31],
+  stocks: [{
+    sym: "AAPL",
+    name: "Apple",
+    px: [64.77, 71.17, 75.02, 66.41, 61.78, 71.38, 77.45, 88.87, 103.54, 125.97, 113.05, 106.27, 116.41, 129.75]
+  }, {
+    sym: "AMZN",
+    name: "Amazon",
+    px: [90.04, 92.39, 100.44, 94.19, 97.49, 123.7, 122.12, 137.94, 158.23, 172.55, 157.44, 151.81, 158.4, 162.85]
+  }, {
+    sym: "MSFT",
+    name: "Microsoft",
+    px: [144.79, 150.84, 162.82, 155.38, 151.26, 171.88, 176.24, 195.73, 197.17, 217.43, 202.78, 195.2, 206.92, 215.0]
+  }, {
+    sym: "TSLA",
+    name: "Tesla",
+    px: [22.0, 27.89, 43.37, 44.53, 34.93, 52.13, 55.67, 71.99, 95.38, 166.11, 143.0, 129.35, 189.2, 235.22]
+  }, {
+    sym: "NVDA",
+    name: "NVIDIA",
+    px: [5.4, 5.86, 5.89, 6.73, 6.57, 7.28, 8.84, 9.47, 10.58, 13.33, 13.49, 12.5, 13.36, 13.02]
+  }, {
+    sym: "INTC",
+    name: "Intel",
+    px: [51.21, 52.79, 56.39, 49.21, 47.97, 53.17, 56.1, 53.34, 42.55, 45.73, 46.47, 39.74, 43.71, 45.04]
+  }],
+  headlines: {
+    "2019-11": "It's late 2019. Markets are calm and near record highs. You have <b>$10,000</b>.",
+    "2020-01": "A mysterious new virus is spreading in Wuhan, China. Wall Street barely reacts.",
+    "2020-02": "<b>COVID-19 goes global.</b> The fastest market crash in history begins.",
+    "2020-03": "<b>Lockdowns everywhere.</b> Stocks crater about 34% in five weeks, then the Fed floods markets with cash.",
+    "2020-04": "<b>A furious rebound starts.</b> Stay-at-home tech leads the way.",
+    "2020-06": "Tech is booming as the world moves online. Tesla, Apple and Amazon surge.",
+    "2020-08": "<b>Apple and Tesla split their stock.</b> Retail traders pile in.",
+    "2020-11": "<b>Vaccine breakthroughs</b> are announced. The recovery broadens.",
+    "2020-12": "December 2020. Big Tech had a monster year, but not every stock came back."
+  }
+};
+const TM_SCENARIOS = [TM_SC_2008, TM_SC_COVID];
+
+/* ================= TIME MACHINE (historical challenge) ================= */
+const TM_START = 10000;
+const TM_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function tmFmtMonth(lbl) {
+  const p = lbl.split("-");
+  return TM_MONTHS[+p[1] - 1] + " " + p[0];
+}
+function tmMoney(v) {
+  return "$" + v.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+function tmPrice(v) {
+  return "$" + v.toFixed(2);
+}
+function tmPct(v) {
+  return (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+}
+function TimeMachine() {
+  const [st, setSt] = useState({
+    scen: null,
+    started: false,
+    done: false,
+    i: 0,
+    cash: TM_START,
+    sh: {},
+    hist: [],
+    modal: null
+  });
+  const scenOf = id => TM_SCENARIOS.find(x => x.id === id) || TM_SCENARIOS[0];
+  const A = st.scen ? scenOf(st.scen) : null;
+  const pxAt = (sym, i) => A.stocks.find(s => s.sym === sym).px[i];
+  const invested = () => {
+    let t = 0;
+    for (const k in st.sh) {
+      if (st.sh[k] > 0) t += st.sh[k] * pxAt(k, st.i);
+    }
+    return t;
+  };
+  const pv = () => st.cash + invested();
+  const snpAt = i => TM_START * A.sp[i] / A.sp[0];
+  const LAST = A ? A.labels.length - 1 : 0;
+  const pick = id => setSt(s => ({
+    ...s,
+    scen: id
+  }));
+  const back = () => setSt(s => ({
+    ...s,
+    scen: null
+  }));
+  const start = () => setSt(s => ({
+    ...s,
+    started: true,
+    done: false,
+    i: 0,
+    cash: TM_START,
+    sh: {},
+    hist: []
+  }));
+  const replay = () => setSt(s => ({
+    ...s,
+    started: true,
+    done: false,
+    i: 0,
+    cash: TM_START,
+    sh: {},
+    hist: []
+  }));
+  const advance = n => setSt(s => {
+    const a = scenOf(s.scen);
+    const last = a.labels.length - 1;
+    const pxL = (sym, idx) => a.stocks.find(x => x.sym === sym).px[idx];
+    const pvL = idx => {
+      let inv = 0;
+      for (const k in s.sh) {
+        if (s.sh[k] > 0) inv += s.sh[k] * pxL(k, idx);
+      }
+      return s.cash + inv;
+    };
+    const snpL = idx => TM_START * a.sp[idx] / a.sp[0];
+    let i = s.i;
+    const hist = s.hist.slice();
+    let done = s.done;
+    const target = Math.min(i + n, last);
+    while (i < target) {
+      hist.push({
+        i: i,
+        pv: pvL(i),
+        snp: snpL(i)
+      });
+      i++;
+    }
+    if (i >= last && !done) {
+      hist.push({
+        i: last,
+        pv: pvL(last),
+        snp: snpL(last)
+      });
+      done = true;
+    }
+    return {
+      ...s,
+      i: i,
+      hist: hist,
+      done: done
+    };
+  });
+  const openTrade = (sym, side) => setSt(s => ({
+    ...s,
+    modal: {
+      sym: sym,
+      side: side,
+      qty: ""
+    }
+  }));
+  const closeModal = () => setSt(s => ({
+    ...s,
+    modal: null
+  }));
+  const setQty = q => setSt(s => ({
+    ...s,
+    modal: {
+      ...s.modal,
+      qty: q.replace(/[^0-9]/g, "")
+    }
+  }));
+  const doTrade = () => setSt(s => {
+    const m = s.modal;
+    if (!m) return s;
+    const a = scenOf(s.scen);
+    const p = a.stocks.find(x => x.sym === m.sym).px[s.i];
+    const q = Math.floor(Number(m.qty) || 0);
+    if (q < 1) return s;
+    if (m.side === "buy") {
+      const cost = q * p;
+      if (cost > s.cash + 1e-9) return s;
+      return {
+        ...s,
+        cash: s.cash - cost,
+        sh: {
+          ...s.sh,
+          [m.sym]: (s.sh[m.sym] || 0) + q
+        },
+        modal: null
+      };
+    }
+    const have = s.sh[m.sym] || 0;
+    if (q > have) return s;
+    return {
+      ...s,
+      cash: s.cash + q * p,
+      sh: {
+        ...s.sh,
+        [m.sym]: have - q
+      },
+      modal: null
+    };
+  });
+
+  /* ----- scenario picker ----- */
+  if (!st.started && !st.scen) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "tm-root"
+    }, /*#__PURE__*/React.createElement(TMHeader, {
+      tag: "CHOOSE YOUR ERA"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "tm-card"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-inner"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-lbl"
+    }, "Time Machine"), /*#__PURE__*/React.createElement("h2", {
+      className: "tm-h2"
+    }, "Pick a market to trade"), /*#__PURE__*/React.createElement("p", {
+      className: "tm-p"
+    }, "Each run gives you $10,000 and real historical prices. Buy low, sell high, beat the S&P 500."), TM_SCENARIOS.map(s => {
+      const names = s.stocks.slice(0, 4).map(x => x.name).join(", ");
+      return /*#__PURE__*/React.createElement("button", {
+        key: s.id,
+        className: "tm-pick",
+        onClick: () => pick(s.id)
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "tm-pick-top"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "tm-pick-title"
+      }, s.title), /*#__PURE__*/React.createElement("span", {
+        className: "tm-pick-tag"
+      }, s.tag)), /*#__PURE__*/React.createElement("div", {
+        className: "tm-pick-blurb"
+      }, s.blurb), /*#__PURE__*/React.createElement("div", {
+        className: "tm-pick-meta"
+      }, s.stocks.length, " stocks · ", names, "…"));
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "tm-note"
+    }, "Self-contained practice mode. Nothing here touches your live club account."))));
+  }
+
+  /* ----- start screen ----- */
+  if (!st.started && st.scen) {
+    const s = A;
+    const names = s.stocks.slice(0, 4).map(x => x.name).join(", ");
+    const endLbl = tmFmtMonth(s.labels[s.labels.length - 1]);
+    return /*#__PURE__*/React.createElement("div", {
+      className: "tm-root"
+    }, /*#__PURE__*/React.createElement(TMHeader, {
+      tag: s.tag
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "tm-card"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-inner"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "tm-back",
+      onClick: back
+    }, "← all eras"), /*#__PURE__*/React.createElement("div", {
+      className: "tm-lbl"
+    }, "Historical challenge"), /*#__PURE__*/React.createElement("h2", {
+      className: "tm-h2"
+    }, s.title), /*#__PURE__*/React.createElement("ul", {
+      className: "tm-startlist"
+    }, /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+      className: "tm-dot"
+    }, "▲"), /*#__PURE__*/React.createElement("span", null, "You start with ", /*#__PURE__*/React.createElement("b", null, "$10,000"), " in ", /*#__PURE__*/React.createElement("b", null, s.start), ".")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+      className: "tm-dot"
+    }, "▲"), /*#__PURE__*/React.createElement("span", null, "Fast-forward month by month to ", /*#__PURE__*/React.createElement("b", null, endLbl), " through the crash and recovery.")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+      className: "tm-dot"
+    }, "▲"), /*#__PURE__*/React.createElement("span", null, "Buy and sell ", /*#__PURE__*/React.createElement("b", null, s.stocks.length, " real stocks"), " (", names, "…) at their ", /*#__PURE__*/React.createElement("b", null, "actual historical prices"), ".")), /*#__PURE__*/React.createElement("li", null, /*#__PURE__*/React.createElement("span", {
+      className: "tm-dot"
+    }, "▲"), /*#__PURE__*/React.createElement("span", null, "Goal: grow your money and ", /*#__PURE__*/React.createElement("b", null, "beat the S&P 500"), "."))), /*#__PURE__*/React.createElement("button", {
+      className: "tm-primary",
+      onClick: start
+    }, "Enter ", s.start, " →"), /*#__PURE__*/React.createElement("div", {
+      className: "tm-note"
+    }, "Real monthly closing prices (split-adjusted, so % moves are accurate). A self-contained practice mode."))));
+  }
+
+  /* ----- main dashboard ----- */
+  const value = pv();
+  const ret = (value / TM_START - 1) * 100;
+  const snp = snpAt(st.i);
+  const snpRet = (snp / TM_START - 1) * 100;
+  const diff = ret - snpRet;
+  let prev = TM_START;
+  if (st.hist.length) prev = st.hist[st.hist.length - 1].pv;
+  const mdelta = value - prev;
+  const mpct = prev ? mdelta / prev * 100 : 0;
+  const lbl = A.labels[st.i];
+  const head = A.headlines[lbl];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "tm-root"
+  }, /*#__PURE__*/React.createElement(TMHeader, {
+    tag: A.tag
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "tm-card tm-hero"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, "Portfolio value · ", tmFmtMonth(lbl)), /*#__PURE__*/React.createElement("div", {
+    className: "tm-big"
+  }, tmMoney(value)), /*#__PURE__*/React.createElement("div", {
+    className: "tm-delta " + (mdelta >= 0 ? "tm-up" : "tm-down")
+  }, mdelta >= 0 ? "▲" : "▼", " ", tmMoney(Math.abs(mdelta)), " (", tmPct(mpct), ") this step"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-chip " + (diff >= 0 ? "tm-win" : "tm-lose")
+  }, diff >= 0 ? "Beating" : "Trailing", " the S&P by ", Math.abs(diff).toFixed(1), "%"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement(TMChart, {
+    st: st,
+    A: A,
+    pv: pv,
+    snpAt: snpAt
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "tm-legend"
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#F5B843"
+    }
+  }, "■"), " You ", tmPct(ret)), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#6b6875"
+    }
+  }, "▬"), " S&P 500 ", tmPct(snpRet))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-track"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-fill",
+    style: {
+      width: (st.i / LAST * 100).toFixed(1) + "%"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "tm-trackrow"
+  }, /*#__PURE__*/React.createElement("span", null, tmFmtMonth(A.labels[0])), /*#__PURE__*/React.createElement("span", null, st.done ? "FINISHED" : tmFmtMonth(lbl)), /*#__PURE__*/React.createElement("span", null, tmFmtMonth(A.labels[LAST]))))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-row2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-card tm-mini"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, "Cash"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-v"
+  }, tmMoney(st.cash)))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-card tm-mini"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, "Invested"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-v"
+  }, tmMoney(invested()))))), head && /*#__PURE__*/React.createElement("div", {
+    className: "tm-headline",
+    dangerouslySetInnerHTML: {
+      __html: head
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "tm-sect"
+  }, "Market — ", tmFmtMonth(lbl)), /*#__PURE__*/React.createElement("div", {
+    className: "tm-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner",
+    style: {
+      padding: "6px 14px"
+    }
+  }, A.stocks.map(sk => {
+    const p = pxAt(sk.sym, st.i);
+    const pr = st.i > 0 ? pxAt(sk.sym, st.i - 1) : p;
+    const ch = pr ? (p - pr) / pr * 100 : 0;
+    const have = st.sh[sk.sym] || 0;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "tm-stock",
+      key: sk.sym
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-sname"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-t"
+    }, sk.sym), /*#__PURE__*/React.createElement("div", {
+      className: "tm-n"
+    }, sk.name), have > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "tm-hold"
+    }, have, " sh · ", tmMoney(have * p))), /*#__PURE__*/React.createElement("div", {
+      className: "tm-spx"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tm-pp"
+    }, tmPrice(p)), /*#__PURE__*/React.createElement("div", {
+      className: "tm-c " + (ch >= 0 ? "tm-up" : "tm-down")
+    }, ch >= 0 ? "▲" : "▼", " ", Math.abs(ch).toFixed(1), "%")), /*#__PURE__*/React.createElement("div", {
+      className: "tm-acts"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "tm-mini-btn tm-buy",
+      onClick: () => openTrade(sk.sym, "buy")
+    }, "Buy"), /*#__PURE__*/React.createElement("button", {
+      className: "tm-mini-btn tm-sell",
+      disabled: have < 1,
+      onClick: () => openTrade(sk.sym, "sell")
+    }, "Sell")));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-note"
+  }, "Real monthly closing prices (split-adjusted, so % moves are accurate). Buy low, sell high, and try to beat the S&P 500. Self-contained practice run — nothing here touches your live club account."), !st.done && /*#__PURE__*/React.createElement("div", {
+    className: "tm-dock"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "tm-adv",
+    onClick: () => advance(1)
+  }, "Next month →"), /*#__PURE__*/React.createElement("button", {
+    className: "tm-adv tm-ghost",
+    onClick: () => advance(3)
+  }, "Skip 3")), st.modal && /*#__PURE__*/React.createElement(TMTradeModal, {
+    st: st,
+    A: A,
+    onClose: closeModal,
+    onQty: setQty,
+    onConfirm: doTrade
+  }), st.done && /*#__PURE__*/React.createElement(TMResults, {
+    st: st,
+    A: A,
+    pv: pv,
+    snpAt: snpAt,
+    onReplay: replay,
+    onBack: back
+  }));
+}
+function TMHeader({
+  tag
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "tm-topbar"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-logo"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M12 4 L20 19 H4 Z",
+    fill: "#140f04"
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "tm-brand"
+  }, "TIME MACHINE"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-sub"
+  }, "THE FLOOR · ", tag)));
+}
+function TMChart({
+  st,
+  A,
+  pv,
+  snpAt
+}) {
+  const pts = st.hist.slice();
+  pts.push({
+    i: st.i,
+    pv: pv(),
+    snp: snpAt(st.i)
+  });
+  const map = new Map();
+  pts.forEach(p => map.set(p.i, p));
+  const arr = Array.from(map.values()).sort((a, b) => a.i - b.i);
+  const W = 100,
+    H = 46;
+  const vals = [];
+  arr.forEach(p => {
+    vals.push(p.pv, p.snp);
+  });
+  let mn = Math.min.apply(null, vals),
+    mx = Math.max.apply(null, vals);
+  if (mn === mx) {
+    mn *= 0.98;
+    mx *= 1.02;
+  }
+  const xf = i => arr.length < 2 ? 0 : (i - arr[0].i) / (arr[arr.length - 1].i - arr[0].i) * W;
+  const yf = v => H - (v - mn) / (mx - mn) * H;
+  const line = key => arr.map((p, k) => (k ? "L" : "M") + xf(p.i).toFixed(2) + " " + yf(p[key]).toFixed(2)).join(" ");
+  const you = line("pv"),
+    snpL = line("snp");
+  const area = you + " L" + xf(arr[arr.length - 1].i).toFixed(2) + " " + H + " L" + xf(arr[0].i).toFixed(2) + " " + H + " Z";
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 " + W + " " + H,
+    preserveAspectRatio: "none",
+    style: {
+      width: "100%",
+      height: 120,
+      display: "block"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "tmga",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "rgba(245,184,67,0.28)"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "rgba(245,184,67,0)"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: area,
+    fill: "url(#tmga)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: snpL,
+    fill: "none",
+    stroke: "#6b6875",
+    strokeWidth: "0.8",
+    strokeDasharray: "2 2",
+    vectorEffect: "non-scaling-stroke"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: you,
+    fill: "none",
+    stroke: "#F5B843",
+    strokeWidth: "1.6",
+    vectorEffect: "non-scaling-stroke",
+    style: {
+      filter: "drop-shadow(0 0 4px rgba(245,184,67,0.7))"
+    }
+  }));
+}
+function TMTradeModal({
+  st,
+  A,
+  onClose,
+  onQty,
+  onConfirm
+}) {
+  const m = st.modal;
+  const sk = A.stocks.find(x => x.sym === m.sym);
+  const p = sk.px[st.i];
+  const q = Math.floor(Number(m.qty) || 0);
+  const buy = m.side === "buy";
+  const have = st.sh[m.sym] || 0;
+  const maxShares = buy ? Math.floor(st.cash / p) : have;
+  const est = q * p;
+  const over = buy && est > st.cash + 1e-9;
+  const tooMany = !buy && q > have;
+  const blocked = q < 1 || over || tooMany;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "tm-overlay",
+    onClick: e => {
+      if (e.target.classList.contains("tm-overlay")) onClose();
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-modal"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-modal-inr"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    className: "tm-h2",
+    style: {
+      fontSize: 22
+    }
+  }, buy ? "Buy" : "Sell", " ", m.sym), /*#__PURE__*/React.createElement("p", {
+    className: "tm-p",
+    style: {
+      marginTop: 2
+    }
+  }, sk.name, " · ", tmPrice(p), " · ", tmFmtMonth(A.labels[st.i]))), /*#__PURE__*/React.createElement("button", {
+    className: "tm-x",
+    onClick: onClose
+  }, "×")), /*#__PURE__*/React.createElement("input", {
+    className: "tm-input",
+    inputMode: "numeric",
+    placeholder: "0",
+    value: m.qty,
+    autoFocus: true,
+    onChange: e => onQty(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "tm-maxrow"
+  }, /*#__PURE__*/React.createElement("span", null, buy ? "Cash: " + tmMoney(st.cash) : "You hold: " + have + " sh"), /*#__PURE__*/React.createElement("button", {
+    className: "tm-maxbtn",
+    onClick: () => onQty(String(maxShares))
+  }, "Max ", maxShares)), /*#__PURE__*/React.createElement("div", {
+    className: "tm-maxrow"
+  }, /*#__PURE__*/React.createElement("span", null, buy ? "Estimated cost" : "Proceeds"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: over ? "#F0523E" : "#F4F1EA"
+    }
+  }, tmMoney(est))), over && /*#__PURE__*/React.createElement("p", {
+    className: "tm-p",
+    style: {
+      color: "#F0523E"
+    }
+  }, "Not enough cash — short ", tmMoney(est - st.cash), "."), /*#__PURE__*/React.createElement("button", {
+    className: "tm-primary",
+    disabled: blocked,
+    onClick: () => {
+      if (!blocked) onConfirm();
+    }
+  }, over ? "Not enough cash" : (buy ? "Buy " : "Sell ") + (q || "") + " " + m.sym))));
+}
+function TMResults({
+  st,
+  A,
+  pv,
+  snpAt,
+  onReplay,
+  onBack
+}) {
+  const LAST = A.labels.length - 1;
+  const value = pv();
+  const ret = (value / TM_START - 1) * 100;
+  const snp = snpAt(LAST);
+  const snpRet = (snp / TM_START - 1) * 100;
+  const diff = ret - snpRet;
+  let verdict, vcol;
+  if (diff >= 15) {
+    verdict = "🏆 You crushed the market.";
+    vcol = "#3FB950";
+  } else if (diff >= 0) {
+    verdict = "✅ You beat the S&P 500.";
+    vcol = "#3FB950";
+  } else if (diff >= -15) {
+    verdict = "📉 The market beat you this time.";
+    vcol = "#F0523E";
+  } else {
+    verdict = "💥 Rough run — the market won big.";
+    vcol = "#F0523E";
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "tm-overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-modal"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-modal-inr"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, tmFmtMonth(A.labels[LAST]), " · Final results"), /*#__PURE__*/React.createElement("h2", {
+    className: "tm-h2",
+    style: {
+      marginTop: 6
+    }
+  }, tmMoney(value)), /*#__PURE__*/React.createElement("div", {
+    className: "tm-delta " + (ret >= 0 ? "tm-up" : "tm-down"),
+    style: {
+      fontSize: 16
+    }
+  }, tmPct(ret), " total return"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16,
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-card tm-mini"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, "You"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-v " + (ret >= 0 ? "tm-up" : "tm-down")
+  }, tmPct(ret)))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-card tm-mini"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-inner"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tm-lbl"
+  }, "S&P 500"), /*#__PURE__*/React.createElement("div", {
+    className: "tm-v " + (snpRet >= 0 ? "tm-up" : "tm-down")
+  }, tmPct(snpRet))))), /*#__PURE__*/React.createElement("div", {
+    className: "tm-verdict",
+    style: {
+      color: vcol
+    }
+  }, verdict), /*#__PURE__*/React.createElement("p", {
+    className: "tm-p"
+  }, diff >= 0 ? "You outperformed" : "You underperformed", " a buy-and-hold of the S&P 500 by ", /*#__PURE__*/React.createElement("b", null, Math.abs(diff).toFixed(1), "%"), "."), /*#__PURE__*/React.createElement("button", {
+    className: "tm-primary",
+    onClick: onReplay
+  }, "Play again"), /*#__PURE__*/React.createElement("button", {
+    className: "tm-back",
+    style: {
+      marginTop: 12
+    },
+    onClick: onBack
+  }, "← try another era"))));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
