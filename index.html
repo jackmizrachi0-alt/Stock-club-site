@@ -475,6 +475,8 @@ function App() {
   const [news, setNews] = useState(SAMPLE_NEWS);
   const [lookups, setLookups] = useState([]);
   const [detailSymbol, setDetailSymbol] = useState(null);
+  const [valHist, setValHist] = useState([]);
+  const valSnapRef = useRef(0);
   const [allowShorting, setAllowShorting] = useState(true);
   const [adminPlayers, setAdminPlayers] = useState([]);
   const [trades, setTradesList] = useState([]);
@@ -648,6 +650,20 @@ function App() {
       positions: data.positions || []
     };
   };
+  const loadValHistory = async (u, rnd) => {
+    try {
+      const {
+        data
+      } = await sb.from("value_history").select("value, spx, created_at").eq("player_id", u.id).eq("round", rnd).order("created_at", {
+        ascending: true
+      });
+      setValHist(data || []);
+      return data || [];
+    } catch (e) {
+      setValHist([]);
+      return [];
+    }
+  };
   const handleSession = async session => {
     const u = session && session.user ? session.user : null;
     setUser(u);
@@ -671,6 +687,7 @@ function App() {
       const p = await loadPortfolio(u, rnd, cash0);
       setPf(p);
       pfRef.current = p;
+      await loadValHistory(u, rnd);
     } catch (e) {
       setBanner("Trouble loading your data. Try refreshing.");
     }
@@ -857,6 +874,8 @@ function App() {
       const p = await loadPortfolio(user, newRound, startCash);
       setPf(p);
       pfRef.current = p;
+      setValHist([]);
+      valSnapRef.current = 0;
       flashToast("New round started \u2014 tell players to refresh");
     } catch (e) {
       flashToast("Couldn't start a new round.", false);
@@ -943,6 +962,32 @@ function App() {
   if (showWelcome) return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(Welcome, {
     onEnter: dismissWelcome
   }));
+  useEffect(() => {
+    if (!sb || !user) return;
+    const spx = prices && prices.SPY;
+    if (!spx) return;
+    const now = Date.now();
+    if (now - valSnapRef.current < 60000) return;
+    const last = valHist.length ? new Date(valHist[valHist.length - 1].created_at).getTime() : 0;
+    if (last && now - last < 20 * 60 * 1000) return;
+    valSnapRef.current = now;
+    const v = accountValue(pfRef.current, prices);
+    (async () => {
+      try {
+        await sb.from("value_history").insert({
+          player_id: user.id,
+          round,
+          value: v,
+          spx: spx
+        });
+        setValHist(h => h.concat([{
+          value: v,
+          spx: spx,
+          created_at: new Date().toISOString()
+        }]));
+      } catch (e) {}
+    })();
+  }, [prices, user, round, valHist]);
   const val = accountValue(pf, prices);
   const ret = startCash ? (val - startCash) / startCash * 100 : 0;
   return /*#__PURE__*/React.createElement(Shell, null, banner && /*#__PURE__*/React.createElement("div", {
@@ -989,7 +1034,8 @@ function App() {
     ret: ret,
     startCash: startCash,
     onClose: closePosition,
-    setView: setView
+    setView: setView,
+    valHist: valHist
   }), view === "leaderboard" && /*#__PURE__*/React.createElement(Leaderboard, {
     board: board,
     onRefresh: loadBoard
@@ -1897,7 +1943,8 @@ function Portfolio({
   ret,
   startCash,
   onClose,
-  setView
+  setView,
+  valHist
 }) {
   const good = ret >= 0;
   const totalPnl = val - startCash;
@@ -1982,7 +2029,10 @@ function Portfolio({
       color: T.down,
       fontWeight: 600
     }
-  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(PortfolioAnalytics, {
+  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(ValueChart, {
+    hist: valHist,
+    startCash: startCash
+  }), /*#__PURE__*/React.createElement(PortfolioAnalytics, {
     pf: pf,
     prices: prices,
     opens: opens,
@@ -2621,6 +2671,7 @@ function Research({
   onBack
 }) {
   const [items, setItems] = useState(null);
+  const [hist, setHist] = useState(null);
   useEffect(() => {
     let alive = true;
     setItems(null);
@@ -2631,6 +2682,22 @@ function Research({
         if (alive) setItems(Array.isArray(d.items) ? d.items : []);
       } catch (e) {
         if (alive) setItems([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [symbol]);
+  useEffect(() => {
+    let alive = true;
+    setHist(null);
+    (async () => {
+      try {
+        const r = await fetch(RELAY_URL.replace(/\/$/, "") + "/api/history?symbol=" + encodeURIComponent(symbol));
+        const d = await r.json();
+        if (alive) setHist(Array.isArray(d.points) ? d.points : []);
+      } catch (e) {
+        if (alive) setHist([]);
       }
     })();
     return () => {
@@ -2699,7 +2766,9 @@ function Research({
     style: {
       display: "none"
     }
-  })), /*#__PURE__*/React.createElement("h2", {
+  })), /*#__PURE__*/React.createElement(StockChart, {
+    points: hist
+  }), /*#__PURE__*/React.createElement("h2", {
     style: secH
   }, "Recent news"), items === null && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2966,6 +3035,223 @@ function Trades({
       minute: "2-digit"
     })));
   })));
+}
+function ValueChart({
+  hist,
+  startCash
+}) {
+  if (!hist || hist.length < 2) {
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+      style: secH
+    }, "Value over time"), /*#__PURE__*/React.createElement("div", {
+      style: empty
+    }, "Your value chart fills in as the round goes on \\u2014 come back after a few sessions and you'll see your line grow against the S&P 500."));
+  }
+  const t0 = new Date(hist[0].created_at).getTime();
+  const tN = new Date(hist[hist.length - 1].created_at).getTime();
+  const span = tN - t0 || 1;
+  const spx0 = hist[0].spx || 1;
+  const base = startCash || hist[0].value;
+  const you = hist.map(h => Number(h.value));
+  const bench = hist.map(h => base * (Number(h.spx) / spx0));
+  const xs = hist.map(h => (new Date(h.created_at).getTime() - t0) / span);
+  const all = you.concat(bench);
+  let mn = Math.min.apply(null, all),
+    mx = Math.max.apply(null, all);
+  if (mn === mx) {
+    mn *= 0.99;
+    mx *= 1.01;
+  }
+  const W = 100,
+    H = 42;
+  const mk = arr => arr.map((v, i) => (i ? "L" : "M") + (xs[i] * W).toFixed(2) + " " + (H - (v - mn) / (mx - mn) * H).toFixed(2)).join(" ");
+  const youRet = (you[you.length - 1] / base - 1) * 100;
+  const benRet = (bench[bench.length - 1] / base - 1) * 100;
+  const diff = youRet - benRet;
+  const beating = diff >= 0;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Value over time"), /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: "16px 16px 12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: T.muted,
+      letterSpacing: "0.08em"
+    }
+  }, "YOU vs S&P 500"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: beating ? T.up : T.down
+    }
+  }, beating ? "Beating" : "Trailing", " by ", Math.abs(diff).toFixed(1), "%")), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 " + W + " " + H,
+    preserveAspectRatio: "none",
+    style: {
+      width: "100%",
+      height: 120,
+      display: "block"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "vcg",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "rgba(245,183,61,0.28)"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "rgba(245,183,61,0)"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: mk(you) + " L" + W + " " + H + " L0 " + H + " Z",
+    fill: "url(#vcg)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: mk(bench),
+    fill: "none",
+    stroke: "#6b6875",
+    strokeWidth: "0.8",
+    strokeDasharray: "2 2",
+    vectorEffect: "non-scaling-stroke"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: mk(you),
+    fill: "none",
+    stroke: T.gold,
+    strokeWidth: "1.7",
+    vectorEffect: "non-scaling-stroke",
+    style: {
+      filter: "drop-shadow(0 0 4px rgba(245,183,61,0.7))"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16,
+      marginTop: 8,
+      fontSize: 12,
+      color: T.muted
+    }
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.gold
+    }
+  }, "\\u25a0"), " You ", pct(youRet)), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#6b6875"
+    }
+  }, "\\u25ac"), " S&P 500 ", pct(benRet)))));
+}
+function StockChart({
+  points
+}) {
+  if (points === null) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 14,
+      padding: "20px 4px"
+    }
+  }, "Loading chart\\u2026"));
+  if (!points.length) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "Price history isn't available for this ticker right now."));
+  const cl = points.map(p => Number(p.c));
+  let mn = Math.min.apply(null, cl),
+    mx = Math.max.apply(null, cl);
+  if (mn === mx) {
+    mn *= 0.99;
+    mx *= 1.01;
+  }
+  const W = 100,
+    H = 44,
+    n = points.length;
+  const x = i => n < 2 ? 0 : i / (n - 1) * W;
+  const y = v => H - (v - mn) / (mx - mn) * H;
+  const line = points.map((p, i) => (i ? "L" : "M") + x(i).toFixed(2) + " " + y(Number(p.c)).toFixed(2)).join(" ");
+  const first = cl[0],
+    last = cl[cl.length - 1];
+  const chg = first ? (last / first - 1) * 100 : 0;
+  const up = chg >= 0;
+  const col = up ? T.up : T.down;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: "16px 16px 12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontSize: 18,
+      fontWeight: 600
+    }
+  }, price(last)), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: col
+    }
+  }, (up ? "\u25b2 " : "\u25bc ") + pct(chg), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.faint
+    }
+  }, "6mo"))), /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 " + W + " " + H,
+    preserveAspectRatio: "none",
+    style: {
+      width: "100%",
+      height: 130,
+      display: "block"
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: "scg",
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: up ? "rgba(70,197,96,0.26)" : "rgba(251,91,71,0.26)"
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "rgba(0,0,0,0)"
+  }))), /*#__PURE__*/React.createElement("path", {
+    d: line + " L" + W + " " + H + " L0 " + H + " Z",
+    fill: "url(#scg)"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: line,
+    fill: "none",
+    stroke: col,
+    strokeWidth: "1.6",
+    vectorEffect: "non-scaling-stroke",
+    style: {
+      filter: "drop-shadow(0 0 4px " + (up ? "rgba(70,197,96,0.6)" : "rgba(251,91,71,0.6)") + ")"
+    }
+  }))));
 }
 function Toast({
   toast
