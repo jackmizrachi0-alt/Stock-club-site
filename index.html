@@ -1693,44 +1693,6 @@ function Movers({
     className: "mvk"
   }, "LOSERS"), lose.map(m => chip(m, T.down))));
 }
-function smoothData(data, k) {
-  if (!data || data.length < 3 || k < 2) return data;
-  const out = [];
-  const r = Math.floor(k / 2);
-  for (let i = 0; i < data.length; i++) {
-    let s = 0,
-      c = 0;
-    for (let j = i - r; j <= i + r; j++) {
-      if (j >= 0 && j < data.length) {
-        s += data[j];
-        c++;
-      }
-    }
-    out.push(s / c);
-  }
-  return out;
-}
-function smoothPath(xs, ys) {
-  const n = xs.length;
-  if (n < 2) return n ? "M" + xs[0].toFixed(2) + " " + ys[0].toFixed(2) : "";
-  let d = "M" + xs[0].toFixed(2) + " " + ys[0].toFixed(2);
-  for (let i = 0; i < n - 1; i++) {
-    const x0 = xs[i > 0 ? i - 1 : 0],
-      y0 = ys[i > 0 ? i - 1 : 0];
-    const x1 = xs[i],
-      y1 = ys[i];
-    const x2 = xs[i + 1],
-      y2 = ys[i + 1];
-    const x3 = xs[i + 2 < n ? i + 2 : n - 1],
-      y3 = ys[i + 2 < n ? i + 2 : n - 1];
-    const c1x = x1 + (x2 - x0) / 6,
-      c1y = y1 + (y2 - y0) / 6;
-    const c2x = x2 - (x3 - x1) / 6,
-      c2y = y2 - (y3 - y1) / 6;
-    d += " C" + c1x.toFixed(2) + " " + c1y.toFixed(2) + " " + c2x.toFixed(2) + " " + c2y.toFixed(2) + " " + x2.toFixed(2) + " " + y2.toFixed(2);
-  }
-  return d;
-}
 function Sparkline({
   data,
   up
@@ -1742,29 +1704,24 @@ function Sparkline({
       display: "block"
     }
   });
-  const sm = smoothData(data, 3);
-  const min = Math.min.apply(null, sm),
-    max = Math.max.apply(null, sm),
+  const min = Math.min.apply(null, data),
+    max = Math.max.apply(null, data),
     range = max - min || 1;
   const w = 58,
-    h = 20,
-    pad = 2.5;
-  const xs = sm.map((v, i) => i / (sm.length - 1) * w);
-  const ys = sm.map(v => pad + (h - 2 * pad) - (v - min) / range * (h - 2 * pad));
+    h = 20;
+  const pts = data.map((v, i) => i / (data.length - 1) * w + "," + (h - (v - min) / range * h)).join(" ");
   return /*#__PURE__*/React.createElement("svg", {
     width: w,
     height: h,
     style: {
-      display: "block",
-      overflow: "visible"
+      display: "block"
     }
-  }, /*#__PURE__*/React.createElement("path", {
-    d: smoothPath(xs, ys),
+  }, /*#__PURE__*/React.createElement("polyline", {
+    points: pts,
     fill: "none",
     stroke: up ? T.up : T.down,
     strokeWidth: "1.5",
-    strokeLinejoin: "round",
-    strokeLinecap: "round"
+    strokeLinejoin: "round"
   }));
 }
 function Market({
@@ -3107,7 +3064,7 @@ function ValueChart({
   }
   const W = 100,
     H = 42;
-  const mk = arr => smoothPath(xs.map(u => u * W), arr.map(v => H - (v - mn) / (mx - mn) * H));
+  const mk = arr => arr.map((v, i) => (i ? "L" : "M") + (xs[i] * W).toFixed(2) + " " + (H - (v - mn) / (mx - mn) * H).toFixed(2)).join(" ");
   const youRet = (you[you.length - 1] / base - 1) * 100;
   const benRet = (bench[bench.length - 1] / base - 1) * 100;
   const diff = youRet - benRet;
@@ -3175,8 +3132,6 @@ function ValueChart({
     stroke: T.gold,
     strokeWidth: "1.7",
     vectorEffect: "non-scaling-stroke",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px rgba(245,183,61,0.7))"
     }
@@ -3227,7 +3182,7 @@ function StockChart({
     n = points.length;
   const x = i => n < 2 ? 0 : i / (n - 1) * W;
   const y = v => H - (v - mn) / (mx - mn) * H;
-  const line = smoothPath(points.map((p, i) => x(i)), points.map(p => y(Number(p.c))));
+  const line = points.map((p, i) => (i ? "L" : "M") + x(i).toFixed(2) + " " + y(Number(p.c)).toFixed(2)).join(" ");
   const first = cl[0],
     last = cl[cl.length - 1];
   const chg = first ? (last / first - 1) * 100 : 0;
@@ -3293,8 +3248,6 @@ function StockChart({
     stroke: col,
     strokeWidth: "1.6",
     vectorEffect: "non-scaling-stroke",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px " + (up ? "rgba(70,197,96,0.6)" : "rgba(251,91,71,0.6)") + ")"
     }
@@ -4108,7 +4061,7 @@ function TMChart({
   }
   const xf = i => arr.length < 2 ? 0 : (i - arr[0].i) / (arr[arr.length - 1].i - arr[0].i) * W;
   const yf = v => H - (v - mn) / (mx - mn) * H;
-  const line = key => smoothPath(arr.map(p => xf(p.i)), arr.map(p => yf(p[key])));
+  const line = key => arr.map((p, k) => (k ? "L" : "M") + xf(p.i).toFixed(2) + " " + yf(p[key]).toFixed(2)).join(" ");
   const you = line("pv"),
     snpL = line("snp");
   const area = you + " L" + xf(arr[arr.length - 1].i).toFixed(2) + " " + H + " L" + xf(arr[0].i).toFixed(2) + " " + H + " Z";
@@ -4148,8 +4101,6 @@ function TMChart({
     stroke: "#F5B843",
     strokeWidth: "1.6",
     vectorEffect: "non-scaling-stroke",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px rgba(245,184,67,0.7))"
     }
@@ -4320,21 +4271,71 @@ function TMResults({
     onClick: onBack
   }, "← try another era"))));
 }
+function relDate(d) {
+  if (!d) return "";
+  const then = new Date(d + "T00:00:00"),
+    now = new Date();
+  const days = Math.floor((now - then) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return days + "d ago";
+  if (days < 60) return Math.floor(days / 7) + "w ago";
+  return then.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric"
+  });
+}
+function agoTime(iso) {
+  if (!iso) return "";
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
 function Congress() {
   const [trades, setTrades] = useState(null);
+  const [notables, setNotables] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [activeName, setActiveName] = useState(null);
+  const [updated, setUpdated] = useState(null);
+  const [latest, setLatest] = useState(null);
+  const seenRef = useRef((() => {
+    try {
+      return localStorage.getItem("floor_congress_seen") || "";
+    } catch (e) {
+      return "";
+    }
+  })());
   useEffect(() => {
     let alive = true;
-    setTrades(null);
-    fetch(RELAY_URL.replace(/\/$/, "") + "/api/congress?limit=80").then(r => r.json()).then(d => {
-      if (alive) setTrades(Array.isArray(d.trades) ? d.trades : []);
-    }).catch(() => {
-      if (alive) setTrades([]);
-    });
+    const load = showLoading => {
+      if (showLoading) setTrades(null);
+      const base = RELAY_URL.replace(/\/$/, "") + "/api/congress?limit=120";
+      const url = activeName ? base + "&name=" + encodeURIComponent(activeName) : base;
+      fetch(url).then(r => r.json()).then(d => {
+        if (!alive) return;
+        setTrades(Array.isArray(d.trades) ? d.trades : []);
+        if (d.notables && d.notables.length) setNotables(d.notables);
+        if (d.updated) setUpdated(d.updated);
+        if (d.latest) {
+          setLatest(d.latest);
+          try {
+            localStorage.setItem("floor_congress_seen", d.latest);
+          } catch (e) {}
+        }
+      }).catch(() => {
+        if (alive) setTrades([]);
+      });
+    };
+    load(true);
+    const id = setInterval(() => load(false), 180000);
     return () => {
       alive = false;
+      clearInterval(id);
     };
-  }, []);
+  }, [activeName]);
   const partyColor = p => p === "D" ? "#4C9BF5" : p === "R" ? "#F0523E" : T.muted;
   const rows = (trades || []).filter(t => {
     if (filter === "buys") return /purchase|buy/i.test(t.type);
@@ -4347,14 +4348,103 @@ function Congress() {
     style: {
       color: T.muted,
       fontSize: 13,
-      margin: "0 2px 14px",
+      margin: "0 2px 6px",
       lineHeight: 1.5
     }
-  }, "Recent stock trades disclosed by members of the U.S. House and Senate under the STOCK Act. Not advice, just what they filed."), /*#__PURE__*/React.createElement("div", {
+  }, "Stock trades disclosed by U.S. House and Senate members under the STOCK Act. By law these are filed up to 45 days after the trade, so this is the freshest public record, not real-time. Not advice."), updated && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
+      alignItems: "center",
+      gap: 6,
+      margin: "0 2px 4px",
+      fontSize: 11.5,
+      color: T.faint
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 7,
+      height: 7,
+      borderRadius: "50%",
+      background: T.up,
+      boxShadow: "0 0 6px " + T.up
+    }
+  }), "Updated ", agoTime(updated), latest ? " · newest filing " + relDate(latest) : "", " · refreshes automatically"), notables.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "14px 0 6px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      letterSpacing: "0.12em",
+      color: T.muted,
+      margin: "0 2px 10px"
+    }
+  }, "NOTABLE TRADERS · TAP TO FILTER"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      overflowX: "auto",
+      paddingBottom: 6,
+      WebkitOverflowScrolling: "touch"
+    }
+  }, notables.map(n => {
+    const on = activeName === n.name;
+    return /*#__PURE__*/React.createElement("button", {
+      key: n.bioguide,
+      onClick: () => setActiveName(on ? null : n.name),
+      style: {
+        flex: "0 0 auto",
+        width: 128,
+        textAlign: "center",
+        cursor: "pointer",
+        background: on ? "rgba(245,183,61,0.1)" : "rgba(255,255,255,0.03)",
+        border: "1px solid " + (on ? T.gold : "rgba(255,255,255,0.1)"),
+        borderRadius: 14,
+        padding: "12px 8px"
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: n.photo,
+      alt: n.name,
+      onError: e => {
+        e.target.style.visibility = "hidden";
+      },
+      style: {
+        width: 52,
+        height: 52,
+        borderRadius: "50%",
+        objectFit: "cover",
+        objectPosition: "top",
+        border: "2px solid " + partyColor(n.party),
+        display: "block",
+        margin: "0 auto 8px"
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12.5,
+        fontWeight: 600,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      }
+    }, n.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10.5,
+        color: partyColor(n.party),
+        marginTop: 1
+      }
+    }, n.party, "-", n.state), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10.5,
+        color: T.faint,
+        marginTop: 4
+      }
+    }, n.count, " trades"));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
       gap: 8,
-      marginBottom: 12
+      margin: "12px 0"
     }
   }, [["all", "All"], ["buys", "Buys"], ["sells", "Sells"]].map(f => /*#__PURE__*/React.createElement("button", {
     key: f[0],
@@ -4369,7 +4459,20 @@ function Congress() {
       background: filter === f[0] ? "rgba(245,183,61,0.12)" : "transparent",
       color: filter === f[0] ? T.gold : T.muted
     }
-  }, f[1]))), trades === null && /*#__PURE__*/React.createElement("div", {
+  }, f[1])), activeName && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setActiveName(null),
+    style: {
+      marginLeft: "auto",
+      padding: "7px 12px",
+      borderRadius: 9,
+      fontSize: 12.5,
+      fontWeight: 600,
+      cursor: "pointer",
+      border: "1px solid rgba(255,255,255,0.12)",
+      background: "transparent",
+      color: T.muted
+    }
+  }, "✕ ", activeName)), trades === null && /*#__PURE__*/React.createElement("div", {
     style: {
       color: T.muted,
       fontSize: 14,
@@ -4388,6 +4491,7 @@ function Congress() {
     const sell = /sale|sell/i.test(t.type);
     const col = buy ? T.up : sell ? T.down : T.muted;
     const label = buy ? "BOUGHT" : sell ? "SOLD" : (t.type || "").toUpperCase();
+    const isNew = seenRef.current && t.fileDate && t.fileDate > seenRef.current;
     return /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
@@ -4395,7 +4499,8 @@ function Congress() {
         alignItems: "center",
         gap: 12,
         padding: "13px 15px",
-        borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none"
+        borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none",
+        background: isNew ? "rgba(245,183,61,0.05)" : "transparent"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -4423,14 +4528,30 @@ function Congress() {
         color: partyColor(t.party),
         whiteSpace: "nowrap"
       }
-    }, t.party || "", t.state ? "-" + t.state : "")), /*#__PURE__*/React.createElement("div", {
+    }, t.party || "", t.state ? "-" + t.state : ""), isNew && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        fontWeight: 800,
+        letterSpacing: "0.06em",
+        color: "#140f04",
+        background: T.gold,
+        borderRadius: 4,
+        padding: "1px 5px"
+      }
+    }, "NEW")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11.5,
         color: T.faint,
         marginTop: 2,
         textTransform: "capitalize"
       }
-    }, t.chamber, t.fileDate ? " · filed " + t.fileDate : "", t.late ? " · late" : "")), /*#__PURE__*/React.createElement("div", {
+    }, t.chamber, t.fileDate ? " · filed " + relDate(t.fileDate) : "", t.late ? " · " : "", t.late ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.down,
+        textTransform: "none",
+        fontWeight: 600
+      }
+    }, "late") : null)), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "right",
         flexShrink: 0
@@ -4448,7 +4569,7 @@ function Congress() {
       }
     }, t.amount)), /*#__PURE__*/React.createElement("div", {
       style: {
-        width: 68,
+        width: 62,
         textAlign: "right",
         flexShrink: 0
       }
@@ -4473,7 +4594,7 @@ function Congress() {
       marginTop: 14,
       lineHeight: 1.5
     }
-  }, "Source: public STOCK Act disclosures (House Clerk + Senate eFD). Amounts are the ranges politicians report; updates a few times a day."));
+  }, "Source: public STOCK Act disclosures (House Clerk + Senate eFD). Photos: unitedstates.io. Amounts are the ranges politicians report; the feed refreshes on its own every few minutes."));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
