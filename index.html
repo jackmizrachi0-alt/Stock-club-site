@@ -1042,7 +1042,7 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "congress" && /*#__PURE__*/React.createElement(Congress, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
     trades: trades
   }), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
     symbol: detailSymbol,
@@ -1530,7 +1530,7 @@ function Icon({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M8 10h8M8 14h8M8 18h5"
     })),
-    timemachine: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
+    congress: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", { d: "M3 21h18" }), /*#__PURE__*/React.createElement("path", { d: "M4 10h16" }), /*#__PURE__*/React.createElement("path", { d: "M12 3l8 4H4z" }), /*#__PURE__*/React.createElement("path", { d: "M6 10v8M10 10v8M14 10v8M18 10v8" })), timemachine: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("circle", {
       cx: "12",
       cy: "12",
       r: "9"
@@ -1572,7 +1572,7 @@ function Sidebar({
   me,
   onSignOut
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["trades", "Trades"], ["timemachine", "Time Machine"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Leaderboard"], ["trades", "Trades"], ["timemachine", "Time Machine"], ["congress", "Congress"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "sidebar"
@@ -1643,7 +1643,7 @@ function BottomBar({
   setView,
   isAdmin
 }) {
-  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["trades", "Trades"], ["timemachine", "Time"], ["news", "News"], ["learn", "Learn"]];
+  const items = [["portfolio", "Portfolio"], ["market", "Market"], ["leaderboard", "Ranks"], ["trades", "Trades"], ["timemachine", "Time"], ["congress", "Gov"], ["news", "News"], ["learn", "Learn"]];
   if (isAdmin) items.push(["admin", "Admin"]);
   return /*#__PURE__*/React.createElement("div", {
     className: "bottombar"
@@ -2775,7 +2775,7 @@ function Research({
       color: T.muted,
       fontSize: 14
     }
-  }, "Loading news\\u2026"), items && items.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Loading news…"), items && items.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: empty
   }, "No recent news for ", symbol, "."), items && items.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2799,7 +2799,7 @@ function Learn() {
   }, "Finance dictionary"), /*#__PURE__*/React.createElement("input", {
     value: q,
     onChange: e => setQ(e.target.value),
-    placeholder: "Search a term\\u2026",
+    placeholder: "Search a term…",
     style: Object.assign({}, inputStyle, {
       marginTop: 0,
       marginBottom: 18
@@ -3045,7 +3045,7 @@ function ValueChart({
       style: secH
     }, "Value over time"), /*#__PURE__*/React.createElement("div", {
       style: empty
-    }, "Your value chart fills in as the round goes on \\u2014 come back after a few sessions and you'll see your line grow against the S&P 500."));
+    }, "Your value chart fills in as the round goes on — come back after a few sessions and you'll see your line grow against the S&P 500."));
   }
   const t0 = new Date(hist[0].created_at).getTime();
   const tN = new Date(hist[hist.length - 1].created_at).getTime();
@@ -3147,27 +3147,27 @@ function ValueChart({
     style: {
       color: T.gold
     }
-  }, "\\u25a0"), " You ", pct(youRet)), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+  }, "■"), " You ", pct(youRet)), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#6b6875"
     }
-  }, "\\u25ac"), " S&P 500 ", pct(benRet)))));
+  }, "▬"), " S&P 500 ", pct(benRet)))));
 }
 function StockChart({
   points
 }) {
   if (points === null) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+  }, "Price — 6 months"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: T.muted,
       fontSize: 14,
       padding: "20px 4px"
     }
-  }, "Loading chart\\u2026"));
+  }, "Loading chart…"));
   if (!points.length) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+  }, "Price — 6 months"), /*#__PURE__*/React.createElement("div", {
     style: empty
   }, "Price history isn't available for this ticker right now."));
   const cl = points.map(p => Number(p.c));
@@ -3190,7 +3190,7 @@ function StockChart({
   const col = up ? T.up : T.down;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Price \\u2014 6 months"), /*#__PURE__*/React.createElement("div", {
+  }, "Price — 6 months"), /*#__PURE__*/React.createElement("div", {
     className: "glowcard",
     style: {
       padding: "16px 16px 12px"
@@ -4270,6 +4270,161 @@ function TMResults({
     },
     onClick: onBack
   }, "← try another era"))));
+}
+function Congress() {
+  const [trades, setTrades] = useState(null);
+  const [filter, setFilter] = useState("all");
+  useEffect(() => {
+    let alive = true;
+    setTrades(null);
+    fetch(RELAY_URL.replace(/\/$/, "") + "/api/congress?limit=80").then(r => r.json()).then(d => {
+      if (alive) setTrades(Array.isArray(d.trades) ? d.trades : []);
+    }).catch(() => {
+      if (alive) setTrades([]);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const partyColor = p => p === "D" ? "#4C9BF5" : p === "R" ? "#F0523E" : T.muted;
+  const rows = (trades || []).filter(t => {
+    if (filter === "buys") return /purchase|buy/i.test(t.type);
+    if (filter === "sells") return /sale|sell/i.test(t.type);
+    return true;
+  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Congressional trading"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 13,
+      margin: "0 2px 14px",
+      lineHeight: 1.5
+    }
+  }, "Recent stock trades disclosed by members of the U.S. House and Senate under the STOCK Act. Not advice, just what they filed."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, [["all", "All"], ["buys", "Buys"], ["sells", "Sells"]].map(f => /*#__PURE__*/React.createElement("button", {
+    key: f[0],
+    onClick: () => setFilter(f[0]),
+    style: {
+      padding: "7px 14px",
+      borderRadius: 9,
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer",
+      border: "1px solid " + (filter === f[0] ? T.gold : "rgba(255,255,255,0.12)"),
+      background: filter === f[0] ? "rgba(245,183,61,0.12)" : "transparent",
+      color: filter === f[0] ? T.gold : T.muted
+    }
+  }, f[1]))), trades === null && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 14,
+      padding: "20px 4px"
+    }
+  }, "Loading disclosures…"), trades !== null && rows.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "No trades to show right now."), rows.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, rows.map((t, i) => {
+    const buy = /purchase|buy/i.test(t.type);
+    const sell = /sale|sell/i.test(t.type);
+    const col = buy ? T.up : sell ? T.down : T.muted;
+    const label = buy ? "BOUGHT" : sell ? "SOLD" : (t.type || "").toUpperCase();
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "13px 15px",
+        borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        minWidth: 0,
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontSize: 14,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      }
+    }, t.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: partyColor(t.party),
+        whiteSpace: "nowrap"
+      }
+    }, t.party || "", t.state ? "-" + t.state : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11.5,
+        color: T.faint,
+        marginTop: 2,
+        textTransform: "capitalize"
+      }
+    }, t.chamber, t.fileDate ? " · filed " + t.fileDate : "", t.late ? " · late" : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right",
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "mono",
+      style: {
+        fontWeight: 600,
+        fontSize: 15
+      }
+    }, t.ticker), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: T.faint
+      }
+    }, t.amount)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 68,
+        textAlign: "right",
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        color: col
+      }
+    }, label), /*#__PURE__*/React.createElement("div", {
+      className: "mono",
+      style: {
+        fontSize: 11,
+        color: T.faint
+      }
+    }, t.txDate)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      marginTop: 14,
+      lineHeight: 1.5
+    }
+  }, "Source: public STOCK Act disclosures (House Clerk + Senate eFD). Amounts are the ranges politicians report; updates a few times a day."));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
