@@ -1738,6 +1738,8 @@ function Market({
   const [q, setQ] = useState("");
   const [looking, setLooking] = useState(false);
   const [lookErr, setLookErr] = useState("");
+  const [sparkMap, setSparkMap] = useState({});
+  useEffect(() => { let a = true; fetch(RELAY_URL.replace(/\/$/, "") + "/api/spark").then((r) => r.json()).then((d) => { if (a && d && d.spark) setSparkMap(d.spark); }).catch(() => {}); return () => { a = false; }; }, []);
   const qU = q.trim().toUpperCase();
   const rows = UNIVERSE.filter(([s, n]) => (s + n).toLowerCase().indexOf(q.toLowerCase()) !== -1);
   const inUniverse = UNIVERSE.some(([s]) => s === qU);
@@ -1791,10 +1793,10 @@ function Market({
         flexShrink: 0,
         opacity: 0.9
       }
-    }, /*#__PURE__*/React.createElement(Sparkline, {
-      data: history && history[s],
-      up: history && history[s] && history[s].length > 1 ? history[s][history[s].length - 1] >= history[s][0] : opens[s] ? prices[s] >= opens[s] : true
-    }))), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement(Sparkline, (function () {
+      var a = sparkMap[s] && sparkMap[s].length > 1 ? sparkMap[s] : history && history[s];
+      return { data: a, up: a && a.length > 1 ? a[a.length - 1] >= a[0] : opens[s] ? prices[s] >= opens[s] : true };
+    })()))), /*#__PURE__*/React.createElement("span", {
       className: "r mono",
       style: {
         background: f === 1 ? "rgba(63,185,80,.14)" : f === -1 ? "rgba(240,82,62,.14)" : "transparent",
@@ -4388,10 +4390,10 @@ function Congress() {
       WebkitOverflowScrolling: "touch"
     }
   }, notables.map(n => {
-    const on = activeName === n.name;
+    const on = activeName === n.filer;
     return /*#__PURE__*/React.createElement("button", {
       key: n.bioguide,
-      onClick: () => setActiveName(on ? null : n.name),
+      onClick: () => setActiveName(on ? null : n.filer),
       style: {
         flex: "0 0 auto",
         width: 128,
