@@ -1693,6 +1693,44 @@ function Movers({
     className: "mvk"
   }, "LOSERS"), lose.map(m => chip(m, T.down))));
 }
+function smoothData(data, k) {
+  if (!data || data.length < 3 || k < 2) return data;
+  const out = [];
+  const r = Math.floor(k / 2);
+  for (let i = 0; i < data.length; i++) {
+    let s = 0,
+      c = 0;
+    for (let j = i - r; j <= i + r; j++) {
+      if (j >= 0 && j < data.length) {
+        s += data[j];
+        c++;
+      }
+    }
+    out.push(s / c);
+  }
+  return out;
+}
+function smoothPath(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return n ? "M" + xs[0].toFixed(2) + " " + ys[0].toFixed(2) : "";
+  let d = "M" + xs[0].toFixed(2) + " " + ys[0].toFixed(2);
+  for (let i = 0; i < n - 1; i++) {
+    const x0 = xs[i > 0 ? i - 1 : 0],
+      y0 = ys[i > 0 ? i - 1 : 0];
+    const x1 = xs[i],
+      y1 = ys[i];
+    const x2 = xs[i + 1],
+      y2 = ys[i + 1];
+    const x3 = xs[i + 2 < n ? i + 2 : n - 1],
+      y3 = ys[i + 2 < n ? i + 2 : n - 1];
+    const c1x = x1 + (x2 - x0) / 6,
+      c1y = y1 + (y2 - y0) / 6;
+    const c2x = x2 - (x3 - x1) / 6,
+      c2y = y2 - (y3 - y1) / 6;
+    d += " C" + c1x.toFixed(2) + " " + c1y.toFixed(2) + " " + c2x.toFixed(2) + " " + c2y.toFixed(2) + " " + x2.toFixed(2) + " " + y2.toFixed(2);
+  }
+  return d;
+}
 function Sparkline({
   data,
   up
@@ -1704,24 +1742,29 @@ function Sparkline({
       display: "block"
     }
   });
-  const min = Math.min.apply(null, data),
-    max = Math.max.apply(null, data),
+  const sm = smoothData(data, 3);
+  const min = Math.min.apply(null, sm),
+    max = Math.max.apply(null, sm),
     range = max - min || 1;
   const w = 58,
-    h = 20;
-  const pts = data.map((v, i) => i / (data.length - 1) * w + "," + (h - (v - min) / range * h)).join(" ");
+    h = 20,
+    pad = 2.5;
+  const xs = sm.map((v, i) => i / (sm.length - 1) * w);
+  const ys = sm.map(v => pad + (h - 2 * pad) - (v - min) / range * (h - 2 * pad));
   return /*#__PURE__*/React.createElement("svg", {
     width: w,
     height: h,
     style: {
-      display: "block"
+      display: "block",
+      overflow: "visible"
     }
-  }, /*#__PURE__*/React.createElement("polyline", {
-    points: pts,
+  }, /*#__PURE__*/React.createElement("path", {
+    d: smoothPath(xs, ys),
     fill: "none",
     stroke: up ? T.up : T.down,
     strokeWidth: "1.5",
-    strokeLinejoin: "round"
+    strokeLinejoin: "round",
+    strokeLinecap: "round"
   }));
 }
 function Market({
@@ -3064,7 +3107,7 @@ function ValueChart({
   }
   const W = 100,
     H = 42;
-  const mk = arr => arr.map((v, i) => (i ? "L" : "M") + (xs[i] * W).toFixed(2) + " " + (H - (v - mn) / (mx - mn) * H).toFixed(2)).join(" ");
+  const mk = arr => smoothPath(xs.map(u => u * W), arr.map(v => H - (v - mn) / (mx - mn) * H));
   const youRet = (you[you.length - 1] / base - 1) * 100;
   const benRet = (bench[bench.length - 1] / base - 1) * 100;
   const diff = youRet - benRet;
@@ -3132,6 +3175,8 @@ function ValueChart({
     stroke: T.gold,
     strokeWidth: "1.7",
     vectorEffect: "non-scaling-stroke",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px rgba(245,183,61,0.7))"
     }
@@ -3182,7 +3227,7 @@ function StockChart({
     n = points.length;
   const x = i => n < 2 ? 0 : i / (n - 1) * W;
   const y = v => H - (v - mn) / (mx - mn) * H;
-  const line = points.map((p, i) => (i ? "L" : "M") + x(i).toFixed(2) + " " + y(Number(p.c)).toFixed(2)).join(" ");
+  const line = smoothPath(points.map((p, i) => x(i)), points.map(p => y(Number(p.c))));
   const first = cl[0],
     last = cl[cl.length - 1];
   const chg = first ? (last / first - 1) * 100 : 0;
@@ -3248,6 +3293,8 @@ function StockChart({
     stroke: col,
     strokeWidth: "1.6",
     vectorEffect: "non-scaling-stroke",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px " + (up ? "rgba(70,197,96,0.6)" : "rgba(251,91,71,0.6)") + ")"
     }
@@ -4061,7 +4108,7 @@ function TMChart({
   }
   const xf = i => arr.length < 2 ? 0 : (i - arr[0].i) / (arr[arr.length - 1].i - arr[0].i) * W;
   const yf = v => H - (v - mn) / (mx - mn) * H;
-  const line = key => arr.map((p, k) => (k ? "L" : "M") + xf(p.i).toFixed(2) + " " + yf(p[key]).toFixed(2)).join(" ");
+  const line = key => smoothPath(arr.map(p => xf(p.i)), arr.map(p => yf(p[key])));
   const you = line("pv"),
     snpL = line("snp");
   const area = you + " L" + xf(arr[arr.length - 1].i).toFixed(2) + " " + H + " L" + xf(arr[0].i).toFixed(2) + " " + H + " Z";
@@ -4101,6 +4148,8 @@ function TMChart({
     stroke: "#F5B843",
     strokeWidth: "1.6",
     vectorEffect: "non-scaling-stroke",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     style: {
       filter: "drop-shadow(0 0 4px rgba(245,184,67,0.7))"
     }
