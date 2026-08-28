@@ -3163,6 +3163,8 @@ function ValueChart({
 function StockChart({
   points
 }) {
+  const [hover, setHover] = useState(null);
+  const wrap = useRef(null);
   if (points === null) return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
     style: secH
   }, "Price — 6 months"), /*#__PURE__*/React.createElement("div", {
@@ -3195,6 +3197,26 @@ function StockChart({
   const chg = first ? (last / first - 1) * 100 : 0;
   const up = chg >= 0;
   const col = up ? T.up : T.down;
+  const at = clientX => {
+    const el = wrap.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    let f = (clientX - r.left) / r.width;
+    f = Math.max(0, Math.min(1, f));
+    setHover(Math.round(f * (n - 1)));
+  };
+  const hv = hover != null ? points[hover] : null;
+  const hpct = hover != null ? hover / (n - 1) * 100 : 0;
+  const vpct = hv ? (1 - (Number(hv.c) - mn) / (mx - mn)) * 100 : 0;
+  const fmtDate = t => {
+    const d = new Date(t + "T00:00:00");
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  };
+  const tipLeft = hpct > 62;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
     style: secH
   }, "Price — 6 months"), /*#__PURE__*/React.createElement("div", {
@@ -3215,23 +3237,37 @@ function StockChart({
       fontSize: 18,
       fontWeight: 600
     }
-  }, price(last)), /*#__PURE__*/React.createElement("span", {
+  }, hv ? price(Number(hv.c)) : price(last)), /*#__PURE__*/React.createElement("span", {
     className: "mono",
     style: {
       fontSize: 13,
       fontWeight: 600,
       color: col
     }
-  }, (up ? "\u25b2 " : "\u25bc ") + pct(chg), " ", /*#__PURE__*/React.createElement("span", {
+  }, (up ? "▲ " : "▼ ") + pct(chg), " ", /*#__PURE__*/React.createElement("span", {
     style: {
       color: T.faint
     }
-  }, "6mo"))), /*#__PURE__*/React.createElement("svg", {
+  }, "6mo"))), /*#__PURE__*/React.createElement("div", {
+    ref: wrap,
+    style: {
+      position: "relative",
+      width: "100%",
+      height: 150,
+      touchAction: "none",
+      cursor: "crosshair"
+    },
+    onMouseMove: e => at(e.clientX),
+    onMouseLeave: () => setHover(null),
+    onTouchStart: e => at(e.touches[0].clientX),
+    onTouchMove: e => at(e.touches[0].clientX),
+    onTouchEnd: () => setHover(null)
+  }, /*#__PURE__*/React.createElement("svg", {
     viewBox: "0 0 " + W + " " + H,
     preserveAspectRatio: "none",
     style: {
       width: "100%",
-      height: 130,
+      height: "100%",
       display: "block"
     }
   }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
@@ -3258,7 +3294,66 @@ function StockChart({
     style: {
       filter: "drop-shadow(0 0 4px " + (up ? "rgba(70,197,96,0.6)" : "rgba(251,91,71,0.6)") + ")"
     }
-  }))));
+  })), hv && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: hpct + "%",
+      top: 0,
+      bottom: 0,
+      width: 1,
+      background: "rgba(255,255,255,0.25)",
+      pointerEvents: "none"
+    }
+  }), hv && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: hpct + "%",
+      top: vpct + "%",
+      width: 11,
+      height: 11,
+      borderRadius: "50%",
+      background: col,
+      border: "2px solid #0b0a0d",
+      transform: "translate(-50%,-50%)",
+      boxShadow: "0 0 8px " + col,
+      pointerEvents: "none"
+    }
+  }), hv && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: tipLeft ? "auto" : hpct + "%",
+      right: tipLeft ? 100 - hpct + "%" : "auto",
+      top: 0,
+      transform: tipLeft ? "translateX(-8px)" : "translateX(8px)",
+      background: "#141217",
+      border: "1px solid rgba(255,255,255,0.15)",
+      borderRadius: 8,
+      padding: "6px 9px",
+      pointerEvents: "none",
+      whiteSpace: "nowrap",
+      boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
+      zIndex: 2
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 13,
+      fontWeight: 600
+    }
+  }, price(Number(hv.c))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: T.faint,
+      marginTop: 1
+    }
+  }, fmtDate(hv.t)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: T.faint,
+      marginTop: 8,
+      textAlign: "center"
+    }
+  }, "Touch and drag across the chart to see any day's price")));
 }
 function Toast({
   toast
