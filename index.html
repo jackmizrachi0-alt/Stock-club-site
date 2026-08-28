@@ -807,6 +807,11 @@ function App() {
     const pnl = pos.side === "long" ? (p - pos.avgPrice) * pos.shares : (pos.avgPrice - p) * pos.shares;
     flashToast("Closed " + pos.symbol + " \u00b7 " + (pnl >= 0 ? "profit " : "loss ") + money(Math.abs(pnl)), pnl >= 0);
   };
+  const buyTicker = async ticker => {
+    const r = await lookupTicker(ticker);
+    if (r && r.ok === false) { flashToast(r.error || ("Can't trade " + ticker), false); return; }
+    setTrade({ symbol: (ticker || "").toUpperCase().trim(), side: "long" });
+  };
   const lookupTicker = async sym => {
     sym = (sym || "").toUpperCase().trim();
     if (!sym) return {
@@ -1042,7 +1047,7 @@ function App() {
   }), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
-  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "congress" && /*#__PURE__*/React.createElement(Congress, null), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
+  }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "congress" && /*#__PURE__*/React.createElement(Congress, { onBuy: buyTicker }), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
     trades: trades
   }), view === "research" && detailSymbol && /*#__PURE__*/React.createElement(Research, {
     symbol: detailSymbol,
@@ -2230,7 +2235,7 @@ function News({
     style: {
       paddingTop: 20
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(MarketBrief, null), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -4296,11 +4301,14 @@ function agoTime(iso) {
   if (hrs < 24) return hrs + "h ago";
   return Math.floor(hrs / 24) + "d ago";
 }
-function Congress() {
+function Congress({
+  onBuy
+}) {
   const [trades, setTrades] = useState(null);
   const [notables, setNotables] = useState([]);
   const [filter, setFilter] = useState("all");
   const [activeName, setActiveName] = useState(null);
+  const [search, setSearch] = useState("");
   const [updated, setUpdated] = useState(null);
   const [latest, setLatest] = useState(null);
   const seenRef = useRef((() => {
@@ -4310,12 +4318,13 @@ function Congress() {
       return "";
     }
   })());
+  const q = search.trim();
   useEffect(() => {
     let alive = true;
-    const load = showLoading => {
-      if (showLoading) setTrades(null);
+    const run = () => {
+      setTrades(null);
       const base = RELAY_URL.replace(/\/$/, "") + "/api/congress?limit=120";
-      const url = activeName ? base + "&name=" + encodeURIComponent(activeName) : base;
+      const url = q ? base + "&q=" + encodeURIComponent(q) : activeName ? base + "&name=" + encodeURIComponent(activeName) : base;
       fetch(url).then(r => r.json()).then(d => {
         if (!alive) return;
         setTrades(Array.isArray(d.trades) ? d.trades : []);
@@ -4331,13 +4340,14 @@ function Congress() {
         if (alive) setTrades([]);
       });
     };
-    load(true);
-    const id = setInterval(() => load(false), 180000);
+    const t = setTimeout(run, q ? 350 : 0);
+    const id = q ? null : setInterval(run, 180000);
     return () => {
       alive = false;
-      clearInterval(id);
+      clearTimeout(t);
+      if (id) clearInterval(id);
     };
-  }, [activeName]);
+  }, [activeName, q]);
   const partyColor = p => p === "D" ? "#4C9BF5" : p === "R" ? "#F0523E" : T.muted;
   const rows = (trades || []).filter(t => {
     if (filter === "buys") return /purchase|buy/i.test(t.type);
@@ -4370,9 +4380,24 @@ function Congress() {
       background: T.up,
       boxShadow: "0 0 6px " + T.up
     }
-  }), "Updated ", agoTime(updated), latest ? " · newest filing " + relDate(latest) : "", " · refreshes automatically"), notables.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }), "Updated ", agoTime(updated), latest ? " · newest filing " + relDate(latest) : "", " · refreshes automatically"), /*#__PURE__*/React.createElement("input", {
+    value: search,
+    onChange: e => setSearch(e.target.value),
+    placeholder: "Search any member (e.g. Pelosi, Tuberville)…",
     style: {
-      margin: "14px 0 6px"
+      width: "100%",
+      margin: "12px 0 4px",
+      padding: "13px 15px",
+      background: "#0c0b0f",
+      color: T.text,
+      border: "1px solid rgba(255,255,255,0.12)",
+      borderRadius: 12,
+      fontSize: 15,
+      outline: "none"
+    }
+  }), notables.length > 0 && !q && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "12px 0 6px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4461,7 +4486,7 @@ function Congress() {
       background: filter === f[0] ? "rgba(245,183,61,0.12)" : "transparent",
       color: filter === f[0] ? T.gold : T.muted
     }
-  }, f[1])), activeName && /*#__PURE__*/React.createElement("button", {
+  }, f[1])), activeName && !q && /*#__PURE__*/React.createElement("button", {
     onClick: () => setActiveName(null),
     style: {
       marginLeft: "auto",
@@ -4474,7 +4499,7 @@ function Congress() {
       background: "transparent",
       color: T.muted
     }
-  }, "✕ ", activeName)), trades === null && /*#__PURE__*/React.createElement("div", {
+  }, "✕ clear")), trades === null && /*#__PURE__*/React.createElement("div", {
     style: {
       color: T.muted,
       fontSize: 14,
@@ -4482,7 +4507,7 @@ function Congress() {
     }
   }, "Loading disclosures…"), trades !== null && rows.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: empty
-  }, "No trades to show right now."), rows.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, q ? "No trades found for \"" + q + "\"." : "No trades to show right now."), rows.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "glowcard",
     style: {
       padding: 0,
@@ -4499,7 +4524,7 @@ function Congress() {
       style: {
         display: "flex",
         alignItems: "center",
-        gap: 12,
+        gap: 10,
         padding: "13px 15px",
         borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none",
         background: isNew ? "rgba(245,183,61,0.05)" : "transparent"
@@ -4544,51 +4569,37 @@ function Congress() {
       style: {
         fontSize: 11.5,
         color: T.faint,
-        marginTop: 2,
-        textTransform: "capitalize"
+        marginTop: 2
       }
-    }, t.chamber, t.fileDate ? " · filed " + relDate(t.fileDate) : "", t.late ? " · " : "", t.late ? /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
-        color: T.down,
-        textTransform: "none",
-        fontWeight: 600
-      }
-    }, "late") : null)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right",
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "mono",
-      style: {
-        fontWeight: 600,
-        fontSize: 15
-      }
-    }, t.ticker), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: T.faint
-      }
-    }, t.amount)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 62,
-        textAlign: "right",
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
         fontWeight: 700,
-        letterSpacing: "0.06em",
         color: col
       }
-    }, label), /*#__PURE__*/React.createElement("div", {
+    }, label), " ", /*#__PURE__*/React.createElement("span", {
       className: "mono",
       style: {
-        fontSize: 11,
-        color: T.faint
+        color: T.text
       }
-    }, t.txDate)));
+    }, t.ticker), " · ", t.amount, t.fileDate ? " · " + relDate(t.fileDate) : "", t.late ? " · " : "", t.late ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: T.down,
+        fontWeight: 600
+      }
+    }, "late") : null)), /*#__PURE__*/React.createElement("button", {
+      onClick: () => onBuy && onBuy(t.ticker),
+      style: {
+        flexShrink: 0,
+        padding: "8px 16px",
+        borderRadius: 9,
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: "pointer",
+        border: "1px solid rgba(63,185,80,0.4)",
+        background: "rgba(63,185,80,0.14)",
+        color: T.up
+      }
+    }, "Buy"));
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
@@ -4596,7 +4607,113 @@ function Congress() {
       marginTop: 14,
       lineHeight: 1.5
     }
-  }, "Source: public STOCK Act disclosures (House Clerk + Senate eFD). Photos: unitedstates.io. Amounts are the ranges politicians report; the feed refreshes on its own every few minutes."));
+  }, "Source: public STOCK Act disclosures (House Clerk + Senate eFD). Photos: unitedstates.io. \"Buy\" opens a trade at the live price, not the price they paid. Refreshes automatically."));
+}
+function MarketBrief() {
+  const [brief, setBrief] = useState(null);
+  useEffect(() => {
+    let a = true;
+    fetch(RELAY_URL.replace(/\/$/, "") + "/api/market-summary").then(r => r.json()).then(d => {
+      if (a) setBrief(d && d.summary ? d : false);
+    }).catch(() => {
+      if (a) setBrief(false);
+    });
+    return () => {
+      a = false;
+    };
+  }, []);
+  if (brief === false) return null;
+  const paras = brief && brief.summary ? brief.summary.split(/\n\n+/) : [];
+  const ai = brief && brief.source === "ai";
+  return /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: "18px 18px 16px",
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "'Space Grotesk',sans-serif",
+      fontWeight: 700,
+      fontSize: 17
+    }
+  }, "What's happening in markets today"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      letterSpacing: "0.08em",
+      whiteSpace: "nowrap",
+      color: ai ? T.gold : T.muted,
+      border: "1px solid " + (ai ? "rgba(245,183,61,0.4)" : "rgba(255,255,255,0.15)"),
+      borderRadius: 999,
+      padding: "3px 9px"
+    }
+  }, ai ? "✦ AI BRIEF" : "LIVE SNAPSHOT")), brief === null && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: T.muted,
+      fontSize: 14
+    }
+  }, "Loading market brief…"), brief && paras.map((p, i) => /*#__PURE__*/React.createElement("p", {
+    key: i,
+    style: {
+      margin: "0 0 10px",
+      fontSize: 14,
+      lineHeight: 1.6,
+      color: "#d8d5cd"
+    }
+  }, p)), brief && brief.drivers && brief.drivers.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, brief.drivers.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      gap: 9,
+      alignItems: "flex-start",
+      marginTop: 9
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 6,
+      height: 6,
+      borderRadius: "50%",
+      background: T.gold,
+      marginTop: 6,
+      flexShrink: 0,
+      boxShadow: "0 0 6px " + T.gold
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.5
+    }
+  }, /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: T.text
+    }
+  }, d.title, ":"), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted
+    }
+  }, d.detail))))), brief && brief.updated && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      marginTop: 12
+    }
+  }, "Updated ", new Date(brief.updated).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  }), !ai ? " · add a free Groq key to the relay for a written AI brief" : ""));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
