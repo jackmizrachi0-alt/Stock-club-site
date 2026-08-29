@@ -1021,7 +1021,7 @@ function App() {
     onSignOut: signOut
   }), /*#__PURE__*/React.createElement("div", {
     className: "content"
-  }, view === "market" && /*#__PURE__*/React.createElement(Market, {
+  }, view === "market" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Market, {
     prices: prices,
     opens: opens,
     flash: flash,
@@ -1031,7 +1031,7 @@ function App() {
     allowShorting: allowShorting,
     onOpenStock: openStock,
     history: historyRef.current
-  }), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
+  }), /*#__PURE__*/React.createElement("a", { href: "https://www.allinvestview.com/tools/ticker-logos/", target: "_blank", rel: "noopener", style: { display: "block", fontSize: 10.5, color: T.faint, marginTop: 18, textDecoration: "none" } }, "Logos by AllInvestView")), view === "portfolio" && /*#__PURE__*/React.createElement(Portfolio, {
     pf: pf,
     prices: prices,
     opens: opens,
@@ -1774,7 +1774,7 @@ function Market({
         gap: 8,
         minWidth: 0
       }
-    }, /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement(Logo, { sym: s, size: 26 }), /*#__PURE__*/React.createElement("span", {
       style: {
         minWidth: 0,
         overflow: "hidden",
@@ -2727,11 +2727,11 @@ function Research({
     style: {
       marginTop: 18,
       display: "flex",
-      alignItems: "baseline",
-      gap: 14,
+      alignItems: "center",
+      gap: 12,
       flexWrap: "wrap"
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement(Logo, { sym: symbol, size: 40 }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: "'JetBrains Mono', monospace",
       fontWeight: 700,
@@ -3205,9 +3205,11 @@ function StockChart({
     f = Math.max(0, Math.min(1, f));
     setHover(Math.round(f * (n - 1)));
   };
-  const hv = hover != null ? points[hover] : null;
-  const hpct = hover != null ? hover / (n - 1) * 100 : 0;
-  const vpct = hv ? (1 - (Number(hv.c) - mn) / (mx - mn)) * 100 : 0;
+  const active = hover != null;
+  const idx = active ? hover : n - 1;
+  const pt = points[idx];
+  const hpct = idx / (n - 1) * 100;
+  const vpct = (1 - (Number(pt.c) - mn) / (mx - mn)) * 100;
   const fmtDate = t => {
     const d = new Date(t + "T00:00:00");
     return d.toLocaleDateString(undefined, {
@@ -3237,7 +3239,7 @@ function StockChart({
       fontSize: 18,
       fontWeight: 600
     }
-  }, hv ? price(Number(hv.c)) : price(last)), /*#__PURE__*/React.createElement("span", {
+  }, price(Number(pt.c))), /*#__PURE__*/React.createElement("span", {
     className: "mono",
     style: {
       fontSize: 13,
@@ -3260,8 +3262,7 @@ function StockChart({
     onMouseMove: e => at(e.clientX),
     onMouseLeave: () => setHover(null),
     onTouchStart: e => at(e.touches[0].clientX),
-    onTouchMove: e => at(e.touches[0].clientX),
-    onTouchEnd: () => setHover(null)
+    onTouchMove: e => at(e.touches[0].clientX)
   }, /*#__PURE__*/React.createElement("svg", {
     viewBox: "0 0 " + W + " " + H,
     preserveAspectRatio: "none",
@@ -3294,31 +3295,31 @@ function StockChart({
     style: {
       filter: "drop-shadow(0 0 4px " + (up ? "rgba(70,197,96,0.6)" : "rgba(251,91,71,0.6)") + ")"
     }
-  })), hv && /*#__PURE__*/React.createElement("div", {
+  })), active && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       left: hpct + "%",
       top: 0,
       bottom: 0,
       width: 1,
-      background: "rgba(255,255,255,0.25)",
+      background: "rgba(255,255,255,0.3)",
       pointerEvents: "none"
     }
-  }), hv && /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       left: hpct + "%",
       top: vpct + "%",
-      width: 11,
-      height: 11,
+      width: 12,
+      height: 12,
       borderRadius: "50%",
       background: col,
-      border: "2px solid #0b0a0d",
+      border: "2.5px solid #0b0a0d",
       transform: "translate(-50%,-50%)",
-      boxShadow: "0 0 8px " + col,
+      boxShadow: "0 0 10px " + col,
       pointerEvents: "none"
     }
-  }), hv && /*#__PURE__*/React.createElement("div", {
+  }), active && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       left: tipLeft ? "auto" : hpct + "%",
@@ -3340,13 +3341,13 @@ function StockChart({
       fontSize: 13,
       fontWeight: 600
     }
-  }, price(Number(hv.c))), /*#__PURE__*/React.createElement("div", {
+  }, price(Number(pt.c))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10.5,
       color: T.faint,
       marginTop: 1
     }
-  }, fmtDate(hv.t)))), /*#__PURE__*/React.createElement("div", {
+  }, fmtDate(pt.t)))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10.5,
       color: T.faint,
@@ -5078,6 +5079,113 @@ function Activity({
       }
     }, agoTime(a.created_at)));
   })));
+}
+var LOGO_DOMAINS = {
+  AAPL: "apple.com",
+  MSFT: "microsoft.com",
+  NVDA: "nvidia.com",
+  AMZN: "amazon.com",
+  GOOGL: "google.com",
+  GOOG: "google.com",
+  META: "meta.com",
+  TSLA: "tesla.com",
+  AMD: "amd.com",
+  NFLX: "netflix.com",
+  DIS: "thewaltdisneycompany.com",
+  JPM: "jpmorganchase.com",
+  V: "visa.com",
+  WMT: "walmart.com",
+  KO: "coca-colacompany.com",
+  PEP: "pepsico.com",
+  XOM: "exxonmobil.com",
+  BA: "boeing.com",
+  NKE: "nike.com",
+  SBUX: "starbucks.com",
+  UBER: "uber.com",
+  PYPL: "paypal.com",
+  INTC: "intel.com",
+  GME: "gamestop.com",
+  AMC: "amctheatres.com",
+  SPY: "ssga.com",
+  QQQ: "invesco.com",
+  VOO: "vanguard.com",
+  ARKK: "ark-funds.com",
+  DIA: "ssga.com",
+  MA: "mastercard.com",
+  CRM: "salesforce.com",
+  ABNB: "airbnb.com",
+  COIN: "coinbase.com",
+  COST: "costco.com",
+  SHOP: "shopify.com",
+  BAC: "bankofamerica.com",
+  GS: "goldmansachs.com",
+  C: "citigroup.com",
+  F: "ford.com",
+  GM: "gm.com",
+  T: "att.com",
+  VZ: "verizon.com",
+  CVX: "chevron.com",
+  PFE: "pfizer.com",
+  JNJ: "jnj.com",
+  HD: "homedepot.com",
+  MCD: "mcdonalds.com",
+  CAT: "caterpillar.com",
+  GE: "ge.com",
+  IBM: "ibm.com",
+  ORCL: "oracle.com",
+  CSCO: "cisco.com",
+  QCOM: "qualcomm.com",
+  TXN: "ti.com",
+  AVGO: "broadcom.com",
+  ADBE: "adobe.com",
+  PLTR: "palantir.com",
+  MRNA: "modernatx.com",
+  RIVN: "rivian.com"
+};
+function symColor(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return "hsl(" + h + ",45%,42%)";
+}
+function Logo({
+  sym,
+  size
+}) {
+  const [bad, setBad] = useState(false);
+  const sz = size || 28;
+  const dom = LOGO_DOMAINS[(sym || "").toUpperCase()];
+  if (dom && !bad) {
+    return /*#__PURE__*/React.createElement("img", {
+      src: "https://cdn.tickerlogos.com/" + dom,
+      alt: sym,
+      onError: () => setBad(true),
+      style: {
+        width: sz,
+        height: sz,
+        borderRadius: "50%",
+        objectFit: "contain",
+        background: "#fff",
+        padding: Math.round(sz * 0.1),
+        flexShrink: 0,
+        boxSizing: "border-box"
+      }
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: sz,
+      height: sz,
+      borderRadius: "50%",
+      background: symColor((sym || "?").toUpperCase()),
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: Math.round(sz * 0.4),
+      fontWeight: 700,
+      flexShrink: 0
+    }
+  }, (sym || "?").slice(0, 2).toUpperCase());
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
