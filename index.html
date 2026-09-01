@@ -698,18 +698,25 @@ function App() {
       setAuthed(true);
       return;
     }
-    let sub;
+    let sub, done = false;
+    const safety = setTimeout(() => { if (!done) setAuthed(true); }, 7000);
     (async () => {
-      const {
-        data
-      } = await sb.auth.getSession();
-      await handleSession(data ? data.session : null);
-      const res = sb.auth.onAuthStateChange((_e, session) => {
-        handleSession(session);
-      });
-      sub = res.data.subscription;
+      try {
+        const withTimeout = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r({ data: null }), ms))]);
+        const { data } = await withTimeout(sb.auth.getSession(), 6000);
+        await handleSession(data ? data.session : null);
+        const res = sb.auth.onAuthStateChange((_e, session) => {
+          handleSession(session);
+        });
+        sub = res.data.subscription;
+      } catch (e) {
+        setAuthed(true);
+      }
+      done = true;
+      clearTimeout(safety);
     })();
     return () => {
+      clearTimeout(safety);
       if (sub) sub.unsubscribe();
     };
   }, []);
@@ -1041,10 +1048,10 @@ function App() {
     onClose: closePosition,
     setView: setView,
     valHist: valHist
-  }), view === "leaderboard" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Activity, { sb: sb }), /*#__PURE__*/React.createElement(Leaderboard, {
+  }), view === "leaderboard" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Leaderboard, {
     board: board,
     onRefresh: loadBoard
-  })), view === "news" && /*#__PURE__*/React.createElement(News, {
+  }), /*#__PURE__*/React.createElement(Activity, { sb: sb })), view === "news" && /*#__PURE__*/React.createElement(News, {
     news: news,
     feed: feed
   }), view === "learn" && /*#__PURE__*/React.createElement(Learn, null), view === "timemachine" && /*#__PURE__*/React.createElement(TimeMachine, null), view === "charts" && /*#__PURE__*/React.createElement(Charts, null), view === "congress" && /*#__PURE__*/React.createElement(Congress, { onBuy: buyTicker }), view === "trades" && /*#__PURE__*/React.createElement(Trades, {
