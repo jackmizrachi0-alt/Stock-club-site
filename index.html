@@ -1960,23 +1960,42 @@ function Portfolio({
   setView,
   valHist
 }) {
-  const good = ret >= 0;
-  const totalPnl = val - startCash;
   const positions = pf.positions || [];
-  let dayPnl = 0,
-    invested = 0,
-    upC = 0,
-    downC = 0;
-  for (const pos of positions) {
+  const cash = Number(pf.cash) || 0;
+  let longVal = 0,
+    shortVal = 0,
+    dayPnl = 0;
+  const rows = positions.map(pos => {
     const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
     const op = opens && opens[pos.symbol] != null ? opens[pos.symbol] : cur;
-    const d = pos.side === "long" ? pos.shares * (cur - op) : pos.shares * (op - cur);
-    dayPnl += d;
-    if (d > 0) upC++;else if (d < 0) downC++;
-    if (pos.side === "long") invested += pos.shares * cur;
-  }
+    const isLong = pos.side === "long";
+    const mv = pos.shares * cur;
+    const cost = pos.shares * pos.avgPrice;
+    const pnl = isLong ? (cur - pos.avgPrice) * pos.shares : (pos.avgPrice - cur) * pos.shares;
+    const pnlPct = cost ? pnl / cost * 100 : 0;
+    const day = isLong ? pos.shares * (cur - op) : pos.shares * (op - cur);
+    if (isLong) longVal += mv;else shortVal += mv;
+    dayPnl += day;
+    return Object.assign({}, pos, {
+      cur,
+      op,
+      isLong,
+      mv,
+      cost,
+      pnl,
+      pnlPct,
+      day
+    });
+  });
+  const totalPnl = val - startCash;
+  const totalPct = startCash ? totalPnl / startCash * 100 : 0;
   const openVal = val - dayPnl;
   const dayPct = openVal ? dayPnl / openVal * 100 : 0;
+  const tGood = totalPnl >= 0,
+    dGood = dayPnl >= 0;
+  const arrow = g => g ? "\u25b2" : "\u25bc";
+  const movers = rows.filter(r => Math.abs(r.day) >= 0.005).sort((a, b) => b.day - a.day);
+  const maxAbs = Math.max.apply(null, movers.map(m => Math.abs(m.day)).concat([1]));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       paddingTop: 20
@@ -1999,136 +2018,274 @@ function Portfolio({
       letterSpacing: "-0.02em"
     }
   }, money(val)), /*#__PURE__*/React.createElement("div", {
-    className: "mono",
-    style: {
-      marginTop: 10,
-      color: dayPnl >= 0 ? T.up : T.down,
-      fontSize: 15
-    }
-  }, (dayPnl >= 0 ? "\u25b2 " : "\u25bc ") + money(Math.abs(dayPnl)), " ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      opacity: 0.85
-    }
-  }, "(", pct(dayPct), ") today"))), /*#__PURE__*/React.createElement("div", {
-    className: "cards"
-  }, /*#__PURE__*/React.createElement(Stat, {
-    label: "CASH",
-    value: money(pf.cash)
-  }), /*#__PURE__*/React.createElement(Stat, {
-    label: "INVESTED",
-    value: money(invested)
-  }), /*#__PURE__*/React.createElement(Stat, {
-    label: "TOTAL P&L",
-    value: money(totalPnl),
-    color: totalPnl >= 0 ? T.up : T.down
-  }), /*#__PURE__*/React.createElement(Stat, {
-    label: "RETURN",
-    value: pct(ret),
-    color: good ? T.up : T.down
-  })), positions.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 18,
-      marginTop: 14,
-      fontSize: 13,
-      color: T.muted
+      gap: 26,
+      marginTop: 16,
+      flexWrap: "wrap"
     }
-  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      color: T.up,
-      fontWeight: 600
+      fontSize: 11,
+      color: T.muted,
+      letterSpacing: "0.08em"
     }
-  }, upC), " up today"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+  }, "TOTAL PROFIT / LOSS"), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
     style: {
-      color: T.down,
-      fontWeight: 600
+      fontSize: 21,
+      fontWeight: 700,
+      color: tGood ? T.up : T.down,
+      marginTop: 3
     }
-  }, downC), " down today"), /*#__PURE__*/React.createElement("span", null, positions.length, " holdings")), /*#__PURE__*/React.createElement(ValueChart, {
-    hist: valHist,
-    startCash: startCash
-  }), /*#__PURE__*/React.createElement(PortfolioAnalytics, {
-    pf: pf,
-    prices: prices,
-    opens: opens,
-    val: val,
-    dayPct: dayPct
-  }), /*#__PURE__*/React.createElement(Allocation, {
-    pf: pf,
-    prices: prices
-  }), /*#__PURE__*/React.createElement("h2", {
+  }, arrow(tGood), " ", money(Math.abs(totalPnl)), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, "(", pct(totalPct), ")")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      marginTop: 2
+    }
+  }, "since you started with ", money(startCash))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.muted,
+      letterSpacing: "0.08em"
+    }
+  }, "TODAY"), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 21,
+      fontWeight: 700,
+      color: dGood ? T.up : T.down,
+      marginTop: 3
+    }
+  }, arrow(dGood), " ", money(Math.abs(dayPnl)), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14
+    }
+  }, "(", pct(dayPct), ")")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.faint,
+      marginTop: 2
+    }
+  }, "change since today's open")))), /*#__PURE__*/React.createElement("h2", {
     style: secH
-  }, "Holdings"), !pf.positions || pf.positions.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: empty
-  }, "Nothing open yet. Head to the ", /*#__PURE__*/React.createElement("button", {
-    className: "link",
-    onClick: () => setView("market")
-  }, "Market"), " and place your first trade.") : /*#__PURE__*/React.createElement("div", {
+  }, "How your value adds up"), /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
     style: {
-      border: "1px solid " + T.line,
-      borderRadius: 14,
-      overflow: "hidden",
-      background: "#101010",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
+      padding: "16px 18px"
     }
   }, /*#__PURE__*/React.createElement("div", {
-    className: "pos-head"
-  }, /*#__PURE__*/React.createElement("span", null, "Position"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "Qty"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "Avg"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "Now"), /*#__PURE__*/React.createElement("span", {
-    className: "r"
-  }, "P&L"), /*#__PURE__*/React.createElement("span", {
-    className: "r act"
-  })), pf.positions.map((pos, i) => {
-    const cur = prices[pos.symbol] != null ? prices[pos.symbol] : pos.avgPrice;
-    const pnl = pos.side === "long" ? (cur - pos.avgPrice) * pos.shares : (pos.avgPrice - cur) * pos.shares;
-    const pnlPct = (cur - pos.avgPrice) / pos.avgPrice * 100 * (pos.side === "long" ? 1 : -1);
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted
+    }
+  }, "Cash available"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, money(cash))), longVal > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted
+    }
+  }, "Stocks you own"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.up
+    }
+  }, "+", money(longVal))), shortVal > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: T.muted
+    }
+  }, "Owed to close shorts"), /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      color: T.down
+    }
+  }, "\u2212", money(shortVal))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 1,
+      background: "rgba(255,255,255,0.1)",
+      margin: "8px 0"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "4px 0",
+      fontSize: 15,
+      fontWeight: 700
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "Account value"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, money(val))), shortVal > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: T.faint,
+      marginTop: 8,
+      lineHeight: 1.5
+    }
+  }, "Your cash looks high because shorting pays you upfront, but you owe those shares back. Account value already subtracts that, so it's your real number.")), /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "Your positions"), rows.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: empty
+  }, "No positions yet. Head to the Market to make your first trade."), rows.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 11,
+      padding: "13px 15px",
+      borderTop: i ? "1px solid rgba(255,255,255,0.06)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement(Logo, {
+    sym: r.symbol,
+    size: 30
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 7
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono",
+    style: {
+      fontWeight: 600,
+      fontSize: 14
+    }
+  }, r.symbol), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      fontWeight: 800,
+      letterSpacing: "0.06em",
+      color: r.isLong ? T.up : T.down,
+      border: "1px solid " + (r.isLong ? "rgba(70,197,96,0.4)" : "rgba(251,91,71,0.4)"),
+      borderRadius: 4,
+      padding: "1px 5px"
+    }
+  }, r.isLong ? "LONG" : "SHORT")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: T.faint,
+      marginTop: 2
+    }
+  }, r.shares, " @ ", price(r.avgPrice), " ", "\u2192", " ", price(r.cur))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: r.pnl >= 0 ? T.up : T.down
+    }
+  }, arrow(r.pnl >= 0), " ", money(Math.abs(r.pnl))), /*#__PURE__*/React.createElement("div", {
+    className: "mono",
+    style: {
+      fontSize: 11,
+      color: T.faint
+    }
+  }, pct(r.pnlPct))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => onClose(r),
+    style: {
+      flexShrink: 0,
+      padding: "7px 12px",
+      borderRadius: 8,
+      fontSize: 12.5,
+      fontWeight: 600,
+      cursor: "pointer",
+      border: "1px solid rgba(255,255,255,0.14)",
+      background: "transparent",
+      color: T.muted
+    }
+  }, "Close")))), movers.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h2", {
+    style: secH
+  }, "What moved you today"), /*#__PURE__*/React.createElement("div", {
+    className: "glowcard",
+    style: {
+      padding: "6px 15px"
+    }
+  }, movers.map((r, i) => {
+    const g = r.day >= 0;
+    const w = Math.abs(r.day) / maxAbs * 100;
     return /*#__PURE__*/React.createElement("div", {
       key: i,
-      className: "pos-row"
-    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        padding: "9px 0",
+        borderTop: i ? "1px solid rgba(255,255,255,0.05)" : "none"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        alignItems: "center",
-        gap: 8
+        justifyContent: "space-between",
+        fontSize: 13.5,
+        marginBottom: 5
       }
     }, /*#__PURE__*/React.createElement("span", {
+      className: "mono",
       style: {
-        fontFamily: "'JetBrains Mono', monospace",
         fontWeight: 600
       }
-    }, pos.symbol), /*#__PURE__*/React.createElement("span", {
-      className: pos.side === "long" ? "badge long" : "badge short"
-    }, pos.side.toUpperCase())), /*#__PURE__*/React.createElement("span", {
-      className: "r mono"
-    }, pos.shares), /*#__PURE__*/React.createElement("span", {
-      className: "r mono",
+    }, r.symbol), /*#__PURE__*/React.createElement("span", {
+      className: "mono",
       style: {
-        color: T.muted
+        color: g ? T.up : T.down,
+        fontWeight: 600
       }
-    }, price(pos.avgPrice)), /*#__PURE__*/React.createElement("span", {
-      className: "r mono"
-    }, price(cur)), /*#__PURE__*/React.createElement("span", {
-      className: "r mono",
+    }, g ? "+" : "\u2212", money(Math.abs(r.day)))), /*#__PURE__*/React.createElement("div", {
       style: {
-        color: pnl >= 0 ? T.up : T.down
+        height: 5,
+        background: "rgba(255,255,255,0.06)",
+        borderRadius: 3,
+        overflow: "hidden"
       }
-    }, money(pnl), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 11,
-        opacity: 0.75,
-        marginLeft: 6
+        width: w + "%",
+        height: "100%",
+        background: g ? T.up : T.down,
+        borderRadius: 3
       }
-    }, pct(pnlPct))), /*#__PURE__*/React.createElement("span", {
-      className: "r act"
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "mini close",
-      onClick: () => onClose(pos)
-    }, "Close")));
-  })));
+    })));
+  }))), /*#__PURE__*/React.createElement(ValueChart, {
+    hist: valHist,
+    startCash: startCash
+  }));
 }
 function Stat({
   label,
