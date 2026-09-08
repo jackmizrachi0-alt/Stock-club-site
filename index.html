@@ -804,9 +804,12 @@ function App() {
     setTrade(null);
   };
   const closePosition = async pos => {
+    const before = pf.positions || [];
+    const remaining = before.filter(x => !(x.symbol === pos.symbol && x.side === pos.side && x.shares === pos.shares && x.avgPrice === pos.avgPrice));
+    if (remaining.length === before.length) return;
     const p = prices[pos.symbol];
     const next = Object.assign({}, pf, {
-      positions: (pf.positions || []).filter(x => x !== pos)
+      positions: remaining
     });
     if (pos.side === "long") next.cash += pos.shares * p;else next.cash -= pos.shares * p;
     await savePf(next);
